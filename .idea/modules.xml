@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/Thingworx_Android_Bottle_Flip_App_With_Physics.iml" filepath="$PROJECT_DIR$/Thingworx_Android_Bottle_Flip_App_With_Physics.iml" />
+      <module fileurl="file://$PROJECT_DIR$/thingworx-android-sdk-1.0.0/thingworx-android-sdk-1.0.0.iml" filepath="$PROJECT_DIR$/thingworx-android-sdk-1.0.0/thingworx-android-sdk-1.0.0.iml" />
+      <module fileurl="file://$PROJECT_DIR$/thingworx-common-7.1.0-b13/thingworx-common-7.1.0-b13.iml" filepath="$PROJECT_DIR$/thingworx-common-7.1.0-b13/thingworx-common-7.1.0-b13.iml" />
+      <module fileurl="file://$PROJECT_DIR$/thingworx-communications-client-7.1.0-b13/thingworx-communications-client-7.1.0-b13.iml" filepath="$PROJECT_DIR$/thingworx-communications-client-7.1.0-b13/thingworx-communications-client-7.1.0-b13.iml" />
+    </modules>
+  </component>
+</project>

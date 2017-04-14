@@ -1,0 +1,1 @@
+include ':thingworx-android-sdk-1.0.0', ':thingworx-common-7.1.0-b13', ':thingworx-communications-client-7.1.0-b13'

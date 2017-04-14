@@ -1,0 +1,20 @@
+<configuration>
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>
+                 %level %logger{8} %thread %msg%n%rootException
+            </pattern>
+        </encoder>
+    </appender>
+
+    <!--Set both if the levels below to TRACE to see the details of your communication with the -->
+    <!--server.-->
+    <logger name="com.thingworx" level="TRACE"/>
+    <logger name="de.tavendo.autobahn" level="TRACE"/>
+
+    <root level="TRACE">
+        <appender-ref ref="STDOUT" />
+    </root>
+
+</configuration>

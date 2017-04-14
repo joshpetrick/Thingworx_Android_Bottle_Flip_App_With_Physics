@@ -1,0 +1,2 @@
+configurations.maybeCreate("default")
+artifacts.add("default", file('thingworx-common-7.1.0-b13.jar'))

@@ -1,0 +1,42 @@
+[
+    {
+        "merged": "C:\\Apps\\BottleFlip\\Thingworx_Android_Bottle_Flip_App_With_Physics\\build\\intermediates\\res\\merged\\debug\\drawable-mdpi\\btn_red_dark.png",
+        "source": "C:\\Apps\\BottleFlip\\Thingworx_Android_Bottle_Flip_App_With_Physics\\src\\main\\res\\drawable-mdpi\\btn_red_dark.png"
+    },
+    {
+        "merged": "C:\\Apps\\BottleFlip\\Thingworx_Android_Bottle_Flip_App_With_Physics\\build\\intermediates\\res\\merged\\debug\\drawable-mdpi\\btn_blue_dark.png",
+        "source": "C:\\Apps\\BottleFlip\\Thingworx_Android_Bottle_Flip_App_With_Physics\\src\\main\\res\\drawable-mdpi\\btn_blue_dark.png"
+    },
+    {
+        "merged": "C:\\Apps\\BottleFlip\\Thingworx_Android_Bottle_Flip_App_With_Physics\\build\\intermediates\\res\\merged\\debug\\drawable-mdpi\\ic_settings.png",
+        "source": "C:\\Apps\\BottleFlip\\Thingworx_Android_Bottle_Flip_App_With_Physics\\src\\main\\res\\drawable-mdpi\\ic_settings.png"
+    },
+    {
+        "merged": "C:\\Apps\\BottleFlip\\Thingworx_Android_Bottle_Flip_App_With_Physics\\build\\intermediates\\res\\merged\\debug\\drawable-mdpi\\over_temp.png",
+        "source": "C:\\Apps\\BottleFlip\\Thingworx_Android_Bottle_Flip_App_With_Physics\\src\\main\\res\\drawable-mdpi\\over_temp.png"
+    },
+    {
+        "merged": "C:\\Apps\\BottleFlip\\Thingworx_Android_Bottle_Flip_App_With_Physics\\build\\intermediates\\res\\merged\\debug\\drawable-mdpi\\btn_green.png",
+        "source": "C:\\Apps\\BottleFlip\\Thingworx_Android_Bottle_Flip_App_With_Physics\\src\\main\\res\\drawable-mdpi\\btn_green.png"
+    },
+    {
+        "merged": "C:\\Apps\\BottleFlip\\Thingworx_Android_Bottle_Flip_App_With_Physics\\build\\intermediates\\res\\merged\\debug\\drawable-mdpi\\btn_red.png",
+        "source": "C:\\Apps\\BottleFlip\\Thingworx_Android_Bottle_Flip_App_With_Physics\\src\\main\\res\\drawable-mdpi\\btn_red.png"
+    },
+    {
+        "merged": "C:\\Apps\\BottleFlip\\Thingworx_Android_Bottle_Flip_App_With_Physics\\build\\intermediates\\res\\merged\\debug\\drawable-mdpi\\btn_green_dark.png",
+        "source": "C:\\Apps\\BottleFlip\\Thingworx_Android_Bottle_Flip_App_With_Physics\\src\\main\\res\\drawable-mdpi\\btn_green_dark.png"
+    },
+    {
+        "merged": "C:\\Apps\\BottleFlip\\Thingworx_Android_Bottle_Flip_App_With_Physics\\build\\intermediates\\res\\merged\\debug\\drawable-mdpi\\connected.png",
+        "source": "C:\\Apps\\BottleFlip\\Thingworx_Android_Bottle_Flip_App_With_Physics\\src\\main\\res\\drawable-mdpi\\connected.png"
+    },
+    {
+        "merged": "C:\\Apps\\BottleFlip\\Thingworx_Android_Bottle_Flip_App_With_Physics\\build\\intermediates\\res\\merged\\debug\\drawable-mdpi\\inlet_valve.png",
+        "source": "C:\\Apps\\BottleFlip\\Thingworx_Android_Bottle_Flip_App_With_Physics\\src\\main\\res\\drawable-mdpi\\inlet_valve.png"
+    },
+    {
+        "merged": "C:\\Apps\\BottleFlip\\Thingworx_Android_Bottle_Flip_App_With_Physics\\build\\intermediates\\res\\merged\\debug\\drawable-mdpi\\btn_blue.png",
+        "source": "C:\\Apps\\BottleFlip\\Thingworx_Android_Bottle_Flip_App_With_Physics\\src\\main\\res\\drawable-mdpi\\btn_blue.png"
+    }
+]

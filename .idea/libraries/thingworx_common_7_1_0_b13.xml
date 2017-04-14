@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="thingworx-common-7.1.0-b13">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/thingworx-common-7.1.0-b13/thingworx-common-7.1.0-b13.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

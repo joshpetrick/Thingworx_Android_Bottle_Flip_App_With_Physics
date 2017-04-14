@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Bottle Flip Connection Client</string>
+    <string name="title_activity_settings">Settings</string>
+    <string name="title_activity_preference">PreferenceActivity</string>
+    <string name="pref_connection">Connection Settings</string>
+    <string name="pref_uri">URI</string>
+    <string name="pref_uri_summary">%sws(s)://localhost:8080/Thingworx/WS</string>
+    <string name="pref_app_key">App Key</string>
+    <string name="pref_app_key_summary">From your server under "Application Keys"</string>
+    <string name="sensor_mac_address">Sensor MAC Address</string>
+    <string name="sensor_mac_address_summary">MAC Address of the Bluetooth Sensor</string>
+
+</resources>

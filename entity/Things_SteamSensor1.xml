@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<Entities build="b456" majorVersion="6" minorVersion="0" revision="2" schemaVersion="803">
+    <Things>
+        <Thing name="SteamSensor1" description=""
+               documentationContent="&#10;" effectiveThingPackage="RemoteThingWithFileTransfer" enabled="true"
+               homeMashup="" identifier="" lastModifiedDate="2015-09-15T23:10:23.012-04:00"
+               published="false" tags="Applications:iOSSDK_SteamSensorSample"
+               thingTemplate="RemoteThingWithFileTransfer" valueStream="">
+            <Owner name="Administrator" type="User"/>
+            <avatar/>
+            <DesignTimePermissions>
+                <Create/>
+                <Read/>
+                <Update/>
+                <Delete/>
+                <Metadata/>
+            </DesignTimePermissions>
+            <RunTimePermissions/>
+            <VisibilityPermissions>
+                <Visibility/>
+            </VisibilityPermissions>
+            <ConfigurationTables/>
+            <ThingShape>
+                <PropertyDefinitions>
+                    <PropertyDefinition name="TotalFlow" aspect.cacheTime="0.0"
+                                        aspect.dataChangeType="VALUE" aspect.isLogged="false"
+                                        aspect.isPersistent="false" aspect.isReadOnly="false" baseType="NUMBER"
+                                        category=""
+                                        description="TotalFlow property description" isLocalOnly="false" ordinal="1"/>
+                    <PropertyDefinition name="Temperature" aspect.cacheTime="0.0"
+                                        aspect.dataChangeType="VALUE" aspect.isLogged="false"
+                                        aspect.isPersistent="false" aspect.isReadOnly="false" baseType="NUMBER"
+                                        category=""
+                                        description="Temperature property description" isLocalOnly="false" ordinal="3"/>
+                    <PropertyDefinition name="InletValve" aspect.cacheTime="0.0"
+                                        aspect.dataChangeType="VALUE" aspect.isLogged="false"
+                                        aspect.isPersistent="false" aspect.isReadOnly="false" baseType="BOOLEAN"
+                                        category=""
+                                        description="InletValve property description" isLocalOnly="false" ordinal="5"/>
+                    <PropertyDefinition name="FaultStatus" aspect.cacheTime="0.0"
+                                        aspect.dataChangeType="VALUE" aspect.isLogged="false"
+                                        aspect.isPersistent="false" aspect.isReadOnly="false" baseType="BOOLEAN"
+                                        category=""
+                                        description="FaultStatus property description" isLocalOnly="false" ordinal="6"/>
+                    <PropertyDefinition name="BigGiantString" aspect.cacheTime="0.0"
+                                        aspect.dataChangeType="VALUE" aspect.isLogged="false"
+                                        aspect.isPersistent="false" aspect.isReadOnly="false" baseType="STRING"
+                                        category=""
+                                        description="BigGiantString property description" isLocalOnly="false" ordinal="7"/>
+                    <PropertyDefinition name="TemperatureLimit" aspect.cacheTime="0.0"
+                                        aspect.dataChangeType="VALUE" aspect.isLogged="false"
+                                        aspect.isPersistent="false" aspect.isReadOnly="false" baseType="NUMBER"
+                                        category=""
+                                        description="Temperature limit property description" isLocalOnly="false" ordinal="2"/>
+                    <PropertyDefinition name="Pressure" aspect.cacheTime="0.0"
+                                        aspect.dataChangeType="VALUE" aspect.isLogged="false"
+                                        aspect.isPersistent="false" aspect.isReadOnly="false" baseType="NUMBER"
+                                        category=""
+                                        description="Pressure property description" isLocalOnly="false" ordinal="4"/>
+                </PropertyDefinitions>
+                <ServiceDefinitions>
+                    <ServiceDefinition name="ReverseString" aspect.isAsync="false"
+                                       category=""
+                                       description="Reverses the order to the supplied input string." isAllowOverride="false" isLocalOnly="false"
+                                       isOpen="false" isPrivate="false">
+                        <ResultType name="result" baseType="STRING"
+                                    description="The reversed string." ordinal="0"/>
+                        <ParameterDefinitions>
+                            <FieldDefinition name="stringToReverse" aspect.isRequired="true"
+                                             baseType="STRING"
+                                             description="The input string that should be reversed." ordinal="1"/>
+                        </ParameterDefinitions>
+                    </ServiceDefinition>
+                    <ServiceDefinition name="Shutdown" category=""
+                                       description="Shutdown service description" isAllowOverride="false" isLocalOnly="false"
+                                       isOpen="false" isPrivate="false">
+                        <ResultType name="result" baseType="NOTHING" description="" ordinal="0"/>
+                        <ParameterDefinitions/>
+                    </ServiceDefinition>
+                    <ServiceDefinition name="GetSteamSensorReadings"
+                                       category=""
+                                       description="Example service that returns an InfoTable" isAllowOverride="false" isLocalOnly="false"
+                                       isOpen="false" isPrivate="false">
+                        <ResultType name="result" aspect.dataShape="SteamSensorReadingsPlus"
+                                    baseType="INFOTABLE" description="" ordinal="0"/>
+                        <ParameterDefinitions/>
+                    </ServiceDefinition>
+                    <ServiceDefinition name="AddNumbers" category=""
+                                       description="Add Two Numbers together" isAllowOverride="false" isLocalOnly="false"
+                                       isOpen="false" isPrivate="false">
+                        <ResultType name="result" baseType="NUMBER" description="" ordinal="0"/>
+                        <ParameterDefinitions>
+                            <FieldDefinition name="a" baseType="NUMBER"
+                                             description="First value to add" ordinal="0"/>
+                            <FieldDefinition name="b" baseType="NUMBER"
+                                             description="Second value to add" ordinal="0"/>
+                        </ParameterDefinitions>
+                    </ServiceDefinition>
+                    <ServiceDefinition name="GetBigString"
+                                       category=""
+                                       description="GetBigStringService service description" isAllowOverride="false" isLocalOnly="false"
+                                       isOpen="false" isPrivate="false">
+                        <ResultType name="result" baseType="STRING" description="" ordinal="0"/>
+                        <ParameterDefinitions/>
+                    </ServiceDefinition>
+                </ServiceDefinitions>
+                <EventDefinitions/>
+                <ServiceMappings/>
+                <ServiceImplementations>
+                    <ServiceImplementation name="ReverseString" description="" handlerName="Script">
+                        <ConfigurationTables>
+                            <ConfigurationTable name="Script" description="Script"
+                                                isMultiRow="false" ordinal="0">
+                                <DataShape>
+                                    <FieldDefinitions>
+                                        <FieldDefinition name="code" baseType="STRING"
+                                                         description="code" ordinal="0"/>
+                                    </FieldDefinitions>
+                                </DataShape>
+                                <Rows>
+                                    <Row>
+                                        <code>
+                                            <![CDATA[result = stringToReverse.split("").reverse().join("");]]></code>
+                                    </Row>
+                                </Rows>
+                            </ConfigurationTable>
+                        </ConfigurationTables>
+                    </ServiceImplementation>
+                </ServiceImplementations>
+                <Subscriptions/>
+            </ThingShape>
+            <PropertyBindings/>
+            <RemotePropertyBindings>
+                <RemotePropertyBinding name="TotalFlow" foldType="NONE" pushThreshold="0.0"
+                                       pushType="ALWAYS" sourceName="TotalFlow" timeout="0"/>
+                <RemotePropertyBinding name="Temperature" foldType="NONE" pushThreshold="0.0"
+                                       pushType="ALWAYS" sourceName="Temperature" timeout="0"/>
+                <RemotePropertyBinding name="InletValve" foldType="NONE" pushThreshold="0.0"
+                                       pushType="ALWAYS" sourceName="InletValve" timeout="0"/>
+                <RemotePropertyBinding name="FaultStatus" foldType="NONE" pushThreshold="0.0"
+                                       pushType="ALWAYS" sourceName="FaultStatus" timeout="0"/>
+                <RemotePropertyBinding name="BigGiantString" foldType="NONE" pushThreshold="0.0"
+                                       pushType="ALWAYS" sourceName="BigGiantString" timeout="0"/>
+                <RemotePropertyBinding name="TemperatureLimit" foldType="NONE" pushThreshold="0.0"
+                                       pushType="ALWAYS" sourceName="TemperatureLimit" timeout="0"/>
+                <RemotePropertyBinding name="Pressure" foldType="NONE" pushThreshold="0.0"
+                                       pushType="ALWAYS" sourceName="Pressure" timeout="0"/>
+            </RemotePropertyBindings>
+            <RemoteServiceBindings>
+                <RemoteServiceBinding name="Shutdown" enableQueue="false" sourceName=""
+                                      timeout="0"/>
+                <RemoteServiceBinding name="GetSteamSensorReadings" enableQueue="false"
+                                      sourceName="" timeout="0"/>
+                <RemoteServiceBinding name="AddNumbers" enableQueue="false" sourceName=""
+                                      timeout="0"/>
+                <RemoteServiceBinding name="GetBigString" enableQueue="false" sourceName=""
+                                      timeout="0"/>
+            </RemoteServiceBindings>
+            <RemoteEventBindings/>
+            <AlertConfigurations/>
+            <ImplementedShapes/>
+            <ThingProperties/>
+            <ConfigurationChanges>
+                <ConfigurationChange changeAction="CREATE" changeReason=""
+                                     timestamp="2015-09-15T23:10:23.012-04:00"
+                                     user="Administrator"/>
+            </ConfigurationChanges>
+        </Thing>
+    </Things>
+</Entities>

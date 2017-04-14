@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"  android:layout_height="300dp" android:layout_width="100dp">
+
+    <PreferenceCategory android:title="@string/pref_connection" >
+        <EditTextPreference
+            android:title="@string/pref_uri"
+            android:summary="@string/pref_uri_summary"
+            android:key="prefUri"/>
+        <EditTextPreference
+            android:title="@string/pref_app_key"
+            android:summary="@string/pref_app_key_summary"
+            android:key="prefAppKey"/>
+        <EditTextPreference
+            android:title="@string/sensor_mac_address"
+            android:summary="@string/sensor_mac_address_summary"
+            android:key="prefMacAddress"/>
+    </PreferenceCategory>
+
+</PreferenceScreen>
