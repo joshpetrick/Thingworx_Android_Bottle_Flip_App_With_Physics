@@ -102,7 +102,8 @@ public class ThingworxActivity extends Activity {
         this.uri=sharedPrefs.getString("prefUri", "");
         this.appKey=sharedPrefs.getString("prefAppKey", "");
         String macAddress = sharedPrefs.getString("prefMacAddress", "");
-        return !(this.uri.equals("")||this.appKey.equals("")||macAddress.equals(""));
+        String ident = sharedPrefs.getString("prefRemoteIdentifier","");
+        return !(this.uri.equals("")||this.appKey.equals("")||macAddress.equals("") || ident.equals(""));
     }
 
     private AndroidConnectedThingClient buildClientFromSettings() throws Exception {

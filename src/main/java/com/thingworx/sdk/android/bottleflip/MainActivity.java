@@ -15,15 +15,11 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.widget.CheckBox;
 
-import com.mbientlab.metawear.Data;
+
+
 import com.mbientlab.metawear.MetaWearBoard;
 import com.mbientlab.metawear.Route;
-import com.mbientlab.metawear.Subscriber;
 import com.mbientlab.metawear.android.BtleService;
-import com.mbientlab.metawear.builder.RouteBuilder;
-import com.mbientlab.metawear.builder.RouteComponent;
-import com.mbientlab.metawear.data.Acceleration;
-import com.mbientlab.metawear.data.AngularVelocity;
 import com.mbientlab.metawear.module.Accelerometer;
 import com.mbientlab.metawear.module.BarometerBosch;
 import com.mbientlab.metawear.module.GyroBmi160;
@@ -34,6 +30,7 @@ import com.thingworx.communications.client.things.VirtualThingPropertyChangeEven
 import com.thingworx.communications.client.things.VirtualThingPropertyChangeListener;
 import com.thingworx.sdk.android.activity.PreferenceActivity;
 import com.thingworx.sdk.android.activity.ThingworxActivity;
+
 
 import bolts.Continuation;
 import bolts.Task;
@@ -49,22 +46,10 @@ import bolts.Task;
 public class MainActivity extends ThingworxActivity implements ServiceConnection {
 
     private final static String logTag = MainActivity.class.getSimpleName();
-    public final static class TOGGLE{
-        static final boolean ON = true;
-        static final boolean OFF = false;
-    };
-
     public static final int POLLING_RATE = 250;
     private BtleService.LocalBinder serviceBinder;
-
-    public Accelerometer accelerometer;
-    public GyroBmi160 gyro;
-    public BarometerBosch barometer;
-    public MagnetometerBmm150 magnometer;
-    public Led led;
-
-
-
+    private Accelerometer accelerometer;
+//    private BarometerBosch barometer;
     private final String TAG = MainActivity.class.getName();
     private MetaWearBoard board;
 
@@ -74,14 +59,14 @@ public class MainActivity extends ThingworxActivity implements ServiceConnection
     private CheckBox sensorCheckBox;
 
 
-    private void retrieveBoard(String macAddr) {
+    private MetaWearBoard retrieveBoard(String macAddr) {
         final BluetoothManager btManager=
                 (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
         final BluetoothDevice remoteDevice=
                 btManager.getAdapter().getRemoteDevice(macAddr);
 
         // Create a MetaWear board object for the Bluetooth Device
-        board= serviceBinder.getMetaWearBoard(remoteDevice);
+        return serviceBinder.getMetaWearBoard(remoteDevice);
 
     }
 
@@ -105,25 +90,6 @@ public class MainActivity extends ThingworxActivity implements ServiceConnection
         // Create your Virtual Thing and bind it to your android controls
         try {
 
-
-            bottle1 = new BottleFlipRemoteThing("BottleRemoteThing_BottleFlip_PTC", "Bottle Sensor Remote Thing", "Bottle2", client);
-
-            /* Adding a property change listener to your VirtualThing is a convenient way to directly
-             * bind your android controls to property values. They will get updated
-             * as soon as they are changed, either on the server or locally                       */
-            bottle1.addPropertyChangeListener(new VirtualThingPropertyChangeListener() {
-                @Override
-                public void propertyChangeEventReceived(final VirtualThingPropertyChangeEvent evt) {
-                    final String propertyName = evt.getProperty().getPropertyDefinition().getName();
-                    runOnUiThread(new Runnable() { // Always update your controls on the UI thread
-                        @Override
-                        public void run() {
-
-                        }
-                    });
-                }
-            });
-
             // If you don't have preferences, display the dialog to get them.
             if (!hasConnectionPreferences()) {
                 // Show Preferences Activity
@@ -133,6 +99,9 @@ public class MainActivity extends ThingworxActivity implements ServiceConnection
                 return;
             }
 
+            final String identifier = sharedPrefs.getString("prefRemoteIdentifier", "");
+
+            bottle1 = new BottleFlipRemoteThing("BottleRemoteThing_BottleFlip_PTC", "Bottle Sensor Remote Thing", identifier, client);
             // You only need to do this once, no matter how many things your add
             startProcessScanRequestThread(POLLING_RATE, new ConnectionStateObserver() {
                 @Override
@@ -166,145 +135,17 @@ public class MainActivity extends ThingworxActivity implements ServiceConnection
         Log.i(TAG, "onResume() called.");
         if(getConnectionState() == ConnectionState.DISCONNECTED) {
             try {
-                connect(new VirtualThing[]{bottle1});
-
-                //check if already connected
-                if (!board.isConnected()){
-                    connectBTLE();
-                }
-                else
+                if(bottle1 == null)
                 {
-                    //show connection in app or something?
-                    toggleModules(TOGGLE.ON);
+                    final String identifier = sharedPrefs.getString("prefRemoteIdentifier", "");
+
+                    bottle1 = new BottleFlipRemoteThing("BottleRemoteThing_BottleFlip_PTC", "Bottle Sensor Remote Thing", identifier, client);
                 }
+                connect(new VirtualThing[]{bottle1});
+                connectBTLE();
             } catch (Exception e) {
                 Log.e(TAG, "Restart with new settings failed.", e);
             }
-        }
-    }
-
-    private void toggleModules(boolean toggle) {
-
-
-        if(toggle)
-        {
-            if (gyro != null) {
-                gyro.configure()
-                        .odr(GyroBmi160.OutputDataRate.ODR_25_HZ)
-                        .range(GyroBmi160.Range.values()[0])
-                        .commit();
-                gyro.angularVelocity().addRouteAsync(source -> source.stream((data, env) -> {
-                    final AngularVelocity value = data.value(AngularVelocity.class);
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            //rawData.setText(value.toString());
-                        }
-                    });
-                })).continueWith(new Continuation<Route, Object>() {
-                    @Override
-                    public Object then(Task<Route> task) throws Exception {
-                        System.out.println("Starting Gyro");
-
-                        gyro.angularVelocity().start();
-                        gyro.start();
-
-                        return null;
-                    }
-                });
-
-            }
-            if (accelerometer != null) {
-                accelerometer.configure().odr(25f).commit();
-                accelerometer.acceleration().addRouteAsync(new RouteBuilder() {
-                    @Override
-                    public void configure(RouteComponent source) {
-                        source.stream(new Subscriber() {
-                            @Override
-                            public void apply(Data data, Object... env) {
-                                Acceleration tempD = data.value(Acceleration.class);
-                                runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        //dataText.setText(tempD.toString());
-                                    }
-                                });
-
-                            }
-                        });
-                    }
-                }).continueWith(new Continuation<Route, Object>() {
-
-                    @Override
-                    public Object then(Task<Route> task) throws Exception {
-
-                        System.out.println("Starting Accelerometer");
-                        accelerometer.acceleration().start();
-                        accelerometer.start();
-                        return null;
-                    }
-                });
-            }
-
-            if (barometer != null) {
-                barometer.configure()
-                        .pressureOversampling(BarometerBosch.OversamplingMode.ULTRA_HIGH)
-                        .filterCoeff(BarometerBosch.FilterCoeff.OFF)
-                        .standbyTime(0.5f)
-                        .commit();
-                barometer.altitude().addRouteAsync(new RouteBuilder() {
-                    @Override
-                    public void configure(RouteComponent source) {
-                        source.stream(new Subscriber() {
-                            @Override
-                            public void apply(Data data, Object... env) {
-                                System.out.println("Getting Data");
-                                Float tempD = data.value(Float.class);
-                                runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        //textView2.setText("Altitude (m) "+String.valueOf(tempD));
-                                    }
-                                });
-                            }
-                        });
-                    }
-                }).continueWith(new Continuation<Route, Object>() {
-
-                    @Override
-                    public Object then(Task<Route> task) throws Exception {
-
-                        barometer.altitude().start();
-                        barometer.start();
-
-
-                        System.out.println("Starting Barometer");
-                        return null;
-                    }
-                });
-            }
-        }
-        else
-        {
-            if(gyro != null) {
-                gyro.stop();
-                gyro.angularVelocity().stop();
-                System.out.println("Stopping Gyro");
-            }
-
-            if(accelerometer != null) {
-                accelerometer.stop();
-                accelerometer.acceleration().stop();
-                System.out.println("Stopping Accelerometer");
-            }
-
-            if(barometer != null) {
-                barometer.stop();
-                barometer.altitude().stop();
-                System.out.println("Stopping Barometer");
-            }
-
-            board.tearDown();
         }
     }
 
@@ -346,7 +187,7 @@ public class MainActivity extends ThingworxActivity implements ServiceConnection
     @Override
     public void onDestroy() {
         super.onDestroy();
-        toggleModules(TOGGLE.OFF);
+
         // Unbind the service when the activity is destroyed
         getApplicationContext().unbindService(this);
 
@@ -363,61 +204,63 @@ public class MainActivity extends ThingworxActivity implements ServiceConnection
         System.out.println(name.toString()+" Service Disconnected");
     }
 
+    /**
+     *     Bluetooth connect to the board, and on success, initialize all modules.
+     */
+
     public void connectBTLE()
     {
         final String macAddr = sharedPrefs.getString("prefMacAddress", "");
-        retrieveBoard(macAddr);
+        board = retrieveBoard(macAddr);
         //attempt to connect
         sensorCheckBox.setChecked(board != null);
         if(board != null)
         {
-
-            board.connectAsync().continueWithTask(new Continuation<Void, Task<Void>>() {
-                @Override
-                public Task<Void> then(Task<Void> task) throws Exception {
-                    System.out.println("Board: "+board.isConnected());
-                    if (task.isCancelled()) {
-                        System.out.println("Board Task Failed: "+board.isConnected());
-                        return task;
-
-                    }
-                    return task.isFaulted() ? reconnect(board) : task;
-                }
-            }).continueWith(new Continuation<Void, Object>() {
-
+            board.connectAsync().onSuccessTask(new Continuation<Void, Task<Route>>() {
 
                 @Override
-                public Object then(Task<Void> task) throws Exception {
-                    if(!task.isCancelled())
-                    {
-                        System.out.println("Board: "+board.isConnected());
-                        System.out.println("Board is connected?");
+                public Task<Route> then(Task<Void> task) throws Exception {
 
-                        gyro=board.getModule(GyroBmi160.class);
-                        accelerometer=board.getModule(Accelerometer.class);
-                        barometer=board.getModule(BarometerBosch.class);
-                        magnometer=board.getModule(MagnetometerBmm150.class);
-                        led=board.getModule(Led.class);
+                    accelerometer = board.getModule(Accelerometer.class);
+                    accelerometer.configure().odr(5f).commit();
+                    bottle1.createAccelerometerStream(accelerometer);
+/*
+                    gyro = board.getModule(GyroBmi160.class);
+                    gyro.configure()
+                            .odr(GyroBmi160.OutputDataRate.ODR_25_HZ)
+                            .range(GyroBmi160.Range.values()[0])
+                            .commit();
+                    bottle1.createGyroscopeStream(gyro);
 
-
-                        bottle1.createAccelerometerStream(accelerometer);
-
-                    }
+                    barometer=board.getModule(BarometerBosch.class);
+                    barometer.configure()
+                            .pressureOversampling(BarometerBosch.OversamplingMode.ULTRA_HIGH)
+                            .filterCoeff(BarometerBosch.FilterCoeff.OFF)
+                            .standbyTime(0.5f)
+                            .commit();
+                    bottle1.createBarometerStream(barometer);
+*/
+                    //Future modules to implement
+                    //magnometer=board.getModule(MagnetometerBmm150.class);
+                    //led=board.getModule(Led.class);
                     return null;
                 }
             });
-
-
+/*
+            board.disconnectAsync().continueWith(new Continuation<Void, Void>() {
+                @Override
+                public Void then(Task<Void> task) throws Exception {
+                    Log.i("MainActivity", "Disconnected");
+                    return null;
+                }
+        	});
+*/
+            board.onUnexpectedDisconnect(new MetaWearBoard.UnexpectedDisconnectHandler() {
+                @Override
+                public void disconnected(int status) {
+                    Log.i("MainActivity", "Unexpectedly lost connection: " + status);
+                }
+            });
         }
-        //in main loop read data and update textfield or syso at min
-    }
-
-    public static Task<Void> reconnect(final MetaWearBoard board) {
-        return board.connectAsync().continueWithTask(new Continuation<Void, Task<Void>>() {
-            @Override
-            public Task<Void> then(Task<Void> task) throws Exception {
-                return task.isFaulted() ? reconnect(board) : task;
-            }
-        });
     }
 }

@@ -11,5 +11,7 @@
     <string name="pref_app_key_summary">From your server under "Application Keys"</string>
     <string name="sensor_mac_address">Sensor MAC Address</string>
     <string name="sensor_mac_address_summary">MAC Address of the Bluetooth Sensor</string>
+    <string name="sensor_thingworx_identifier">Remote Thing Identifier</string>
+    <string name="sensor_thingworx_identifier_summary">Specifies which Remote Thing in Thingworx to Bind To.</string>
 
 </resources>
