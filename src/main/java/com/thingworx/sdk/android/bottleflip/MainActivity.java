@@ -15,22 +15,14 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.widget.CheckBox;
 
-
-
 import com.mbientlab.metawear.MetaWearBoard;
 import com.mbientlab.metawear.Route;
 import com.mbientlab.metawear.android.BtleService;
 import com.mbientlab.metawear.module.Accelerometer;
-import com.mbientlab.metawear.module.BarometerBosch;
-import com.mbientlab.metawear.module.GyroBmi160;
-import com.mbientlab.metawear.module.Led;
-import com.mbientlab.metawear.module.MagnetometerBmm150;
+
 import com.thingworx.communications.client.things.VirtualThing;
-import com.thingworx.communications.client.things.VirtualThingPropertyChangeEvent;
-import com.thingworx.communications.client.things.VirtualThingPropertyChangeListener;
 import com.thingworx.sdk.android.activity.PreferenceActivity;
 import com.thingworx.sdk.android.activity.ThingworxActivity;
-
 
 import bolts.Continuation;
 import bolts.Task;
@@ -49,21 +41,19 @@ public class MainActivity extends ThingworxActivity implements ServiceConnection
     public static final int POLLING_RATE = 250;
     private BtleService.LocalBinder serviceBinder;
     private Accelerometer accelerometer;
-//    private BarometerBosch barometer;
     private final String TAG = MainActivity.class.getName();
     private MetaWearBoard board;
 
-    private BottleFlipRemoteThing bottle1;
+    private BottleFlipRemoteThing bottle;
 
     private CheckBox checkBoxConnected;
     private CheckBox sensorCheckBox;
 
 
-    private MetaWearBoard retrieveBoard(String macAddr) {
-        final BluetoothManager btManager=
-                (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
-        final BluetoothDevice remoteDevice=
-                btManager.getAdapter().getRemoteDevice(macAddr);
+    private MetaWearBoard retrieveBoard(String macAddr)
+    {
+        final BluetoothManager btManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
+        final BluetoothDevice remoteDevice = btManager.getAdapter().getRemoteDevice(macAddr);
 
         // Create a MetaWear board object for the Bluetooth Device
         return serviceBinder.getMetaWearBoard(remoteDevice);
@@ -101,21 +91,11 @@ public class MainActivity extends ThingworxActivity implements ServiceConnection
 
             final String identifier = sharedPrefs.getString("prefRemoteIdentifier", "");
 
-            bottle1 = new BottleFlipRemoteThing("BottleRemoteThing_BottleFlip_PTC", "Bottle Sensor Remote Thing", identifier, client);
+            bottle = new BottleFlipRemoteThing("BottleRemoteThing_BottleFlip_PTC", "Bottle Sensor Remote Thing", identifier, client);
             // You only need to do this once, no matter how many things your add
-            startProcessScanRequestThread(POLLING_RATE, new ConnectionStateObserver() {
-                @Override
-                public void onConnectionStateChanged(final boolean connected) {
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            checkBoxConnected.setChecked(connected);
-                        }
-                    });
-                }
-            });
+            startProcessScanRequestThread(POLLING_RATE, connected -> runOnUiThread(() -> checkBoxConnected.setChecked(connected)));
 
-            connect(new VirtualThing[]{bottle1});
+            connect(new VirtualThing[]{bottle});
 
 
         } catch (Exception e) {
@@ -133,17 +113,20 @@ public class MainActivity extends ThingworxActivity implements ServiceConnection
     protected void onResume() {
         super.onResume();
         Log.i(TAG, "onResume() called.");
-        if(getConnectionState() == ConnectionState.DISCONNECTED) {
-            try {
-                if(bottle1 == null)
+        if(getConnectionState() == ConnectionState.DISCONNECTED)
+        {
+            try
+            {
+                if(bottle == null)
                 {
                     final String identifier = sharedPrefs.getString("prefRemoteIdentifier", "");
 
-                    bottle1 = new BottleFlipRemoteThing("BottleRemoteThing_BottleFlip_PTC", "Bottle Sensor Remote Thing", identifier, client);
+                    bottle = new BottleFlipRemoteThing("BottleRemoteThing_BottleFlip_PTC", "Bottle Sensor Remote Thing", identifier, client);
                 }
-                connect(new VirtualThing[]{bottle1});
+                connect(new VirtualThing[]{bottle});
                 connectBTLE();
-            } catch (Exception e) {
+            } catch (Exception e)
+            {
                 Log.e(TAG, "Restart with new settings failed.", e);
             }
         }
@@ -216,51 +199,21 @@ public class MainActivity extends ThingworxActivity implements ServiceConnection
         sensorCheckBox.setChecked(board != null);
         if(board != null)
         {
-            board.connectAsync().onSuccessTask(new Continuation<Void, Task<Route>>() {
+            board.connectAsync().onSuccessTask(new Continuation<Void, Task<Route>>()
+            {
 
                 @Override
-                public Task<Route> then(Task<Void> task) throws Exception {
+                public Task<Route> then(Task<Void> task) throws Exception
+                {
 
                     accelerometer = board.getModule(Accelerometer.class);
                     accelerometer.configure().odr(5f).commit();
-                    bottle1.createAccelerometerStream(accelerometer);
-/*
-                    gyro = board.getModule(GyroBmi160.class);
-                    gyro.configure()
-                            .odr(GyroBmi160.OutputDataRate.ODR_25_HZ)
-                            .range(GyroBmi160.Range.values()[0])
-                            .commit();
-                    bottle1.createGyroscopeStream(gyro);
+                    bottle.createAccelerometerStream(accelerometer);
+                    return null;
+                }
+            });
 
-                    barometer=board.getModule(BarometerBosch.class);
-                    barometer.configure()
-                            .pressureOversampling(BarometerBosch.OversamplingMode.ULTRA_HIGH)
-                            .filterCoeff(BarometerBosch.FilterCoeff.OFF)
-                            .standbyTime(0.5f)
-                            .commit();
-                    bottle1.createBarometerStream(barometer);
-*/
-                    //Future modules to implement
-                    //magnometer=board.getModule(MagnetometerBmm150.class);
-                    //led=board.getModule(Led.class);
-                    return null;
-                }
-            });
-/*
-            board.disconnectAsync().continueWith(new Continuation<Void, Void>() {
-                @Override
-                public Void then(Task<Void> task) throws Exception {
-                    Log.i("MainActivity", "Disconnected");
-                    return null;
-                }
-        	});
-*/
-            board.onUnexpectedDisconnect(new MetaWearBoard.UnexpectedDisconnectHandler() {
-                @Override
-                public void disconnected(int status) {
-                    Log.i("MainActivity", "Unexpectedly lost connection: " + status);
-                }
-            });
+            board.onUnexpectedDisconnect(status -> Log.i("MainActivity", "Unexpectedly lost connection: " + status));
         }
     }
 }

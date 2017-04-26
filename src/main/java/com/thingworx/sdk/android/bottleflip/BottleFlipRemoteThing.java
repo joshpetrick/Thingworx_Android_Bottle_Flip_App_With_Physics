@@ -17,11 +17,8 @@ package com.thingworx.sdk.android.bottleflip;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.mbientlab.metawear.builder.RouteComponent;
 import com.mbientlab.metawear.data.Acceleration;
-import com.mbientlab.metawear.data.AngularVelocity;
 import com.mbientlab.metawear.module.Accelerometer;
-import com.mbientlab.metawear.module.Led;
 import com.thingworx.communications.client.ConnectedThingClient;
 import com.thingworx.communications.client.things.VirtualThing;
 import com.thingworx.metadata.annotations.ThingworxPropertyDefinition;
@@ -32,9 +29,6 @@ import com.thingworx.types.constants.CommonPropertyNames;
 
 import com.mbientlab.metawear.Data;
 import com.mbientlab.metawear.Subscriber;
-import com.mbientlab.metawear.builder.RouteBuilder;
-import com.mbientlab.metawear.module.BarometerBosch;
-import com.mbientlab.metawear.module.GyroBmi160;
 
 import java.util.Date;
 
@@ -46,67 +40,54 @@ import java.util.Date;
  * @Created: Apr 6, 2016
  * Uniontown Solution Center
  *
- *
+ *	Virtual Thing object. Used to represent the Bottle in Thingworx. Includes property definitions and service definitions, as well as handling the physics calculations of the bottle's trajectory
  */
 
 @SuppressWarnings("serial")
 @ThingworxPropertyDefinitions(properties = {
 		@ThingworxPropertyDefinition(name="Speed", description="Data from the sensor", baseType="NUMBER", category="Aggregates", aspects={"isReadOnly:true"}),
 		@ThingworxPropertyDefinition(name="Acceleration", description="Data from the sensor", baseType="NUMBER", category="Aggregates", aspects={"isReadOnly:true"}),
-        @ThingworxPropertyDefinition(name="BarometerLiveData", description="Data from the sensor", baseType="STRING", category="Aggregates", aspects={"isReadOnly:true"}),
-        @ThingworxPropertyDefinition(name="GyroscopeLiveData", description="Data from the sensor", baseType="STRING", category="Aggregates", aspects={"isReadOnly:true"}),
 		@ThingworxPropertyDefinition(name="Height", description="Data from the sensor", baseType="NUMBER", category="Aggregates", aspects={"isReadOnly:true"}),
-		@ThingworxPropertyDefinition(name="isLanded", description="Data from the sensor", baseType="BOOLEAN", category="Aggregates", aspects={"isReadOnly:true"}),
 		@ThingworxPropertyDefinition(name="AccelerometerLiveData", description="Data from the sensor", baseType="STRING", category="Aggregates", aspects={"isReadOnly:true"}),
-		@ThingworxPropertyDefinition(name="DeltaTime", description="Data from the sensor", baseType="NUMBER", category="Aggregates", aspects={"isReadOnly:true"}),
-		@ThingworxPropertyDefinition(name="XOffset", description="Data from the sensor", baseType="NUMBER", category="Aggregates", aspects={"isReadOnly:true"}),
-		@ThingworxPropertyDefinition(name="YOffset", description="Data from the sensor", baseType="NUMBER", category="Aggregates", aspects={"isReadOnly:true"}),
-		@ThingworxPropertyDefinition(name="ZOffset", description="Data from the sensor", baseType="NUMBER", category="Aggregates", aspects={"isReadOnly:true"}),
-		@ThingworxPropertyDefinition(name="ZAngleOffset", description="Data from the sensor", baseType="NUMBER", category="Aggregates", aspects={"isReadOnly:true"}),
 		@ThingworxPropertyDefinition(name="TotalTime", description="Data from the sensor", baseType="NUMBER", category="Aggregates", aspects={"isReadOnly:true"}),
-		@ThingworxPropertyDefinition(name="BarometerHeight", description="Data from the sensor", baseType="NUMBER", category="Aggregates", aspects={"isReadOnly:true"}),
         @ThingworxPropertyDefinition(name="CurrentZData", description="Data from the sensor", baseType="NUMBER", category="Aggregates", aspects={"isReadOnly:true"}),
-		@ThingworxPropertyDefinition(name="IsBottleMoving", description="Data from the sensor", baseType="BOOLEAN", category="Aggregates", aspects={"isReadOnly:true"}),
-        @ThingworxPropertyDefinition(name="AccelerometerRawZValue", description="Data from the sensor", baseType="NUMBER", category="Aggregates", aspects={"isReadOnly:true"})
+		@ThingworxPropertyDefinition(name="IsBottleMoving", description="Data from the sensor", baseType="BOOLEAN", category="Aggregates", aspects={"isReadOnly:true"})
 })
 
 public class BottleFlipRemoteThing extends VirtualThing
 {
 	private static final Logger LOGGER = LoggerFactory.getLogger(BottleFlipRemoteThing.class);
 	private Accelerometer accelerometer;
-	//private BarometerBosch barometer;
 	private boolean isActivelyGatheringData = false;
+
+	//Physical Attributes of the bottle
     private float acceleration = 0.0f;
     private float heightAcceleration = 0.0f;
     private float heightSpeed = 0.0f;
-	private float accelerationZRawValue = 0.0f;
 	private float speed = 0.0f;
 	private float height = 0.0f;
-	private float deltaTime = 0.000f;
-	private float tempSpeed = 0.0f;
-	private float deltaTimeInMills = 0.0f;
-	private float tempHeight = 0.0f;
 	private float currentZData = 0.0f;
+
+	//Variables for calibrating the accelerometer.
 	private float xOffset = 0.0f;
 	private float yOffset = 0.0f;
 	private float zOffset = 0.0f;
-	private float zAngleOffset = 0.0f;
+
+	//keeps track of delta time and throw duration
 	private long millisecondsTimeOfLastRead = 0L;
 	private long duration = 0L;
-    private String barometerData = "";
-    private String gyroscopeData = "";
-    private String accelerometerData = "";
+	private float deltaTime = 0.000f;
 	private Date timeInterval;
-    private float barometerHeight = 0.0f;
-    private float barometerOffset = 0.0f;
+
+    private String accelerometerData = "";
+
+	//logic gates to tell when the bottle is done moving
     private boolean isThrowEnded = false;
     private boolean isThrowStarted = false;
-	private float xAccelerometerData = 0.0f;
-	private float yAccelerationData = 0.0f;
-	private float zAccelerationData = 0.0f;
 	private boolean isBottleMoving = false;
+
+	//Number of times to run the calculations after the bottle has stopped, to allow for the bottle to settle
 	private int count = 10;
-    //private Led led;
 
 	//Constructor - used to initialize Virtual Thing
 	public BottleFlipRemoteThing(String name, String description, String identifier, ConnectedThingClient client)
@@ -159,19 +140,9 @@ public class BottleFlipRemoteThing extends VirtualThing
             super.setProperty("Speed", speed);
             super.setProperty("Acceleration", acceleration);
             super.setProperty("Height", height);
-            super.setProperty("isLanded", true);
             super.setProperty("AccelerometerLiveData", accelerometerData);
-            super.setProperty("DeltaTime", deltaTimeInMills);
             super.setProperty("CurrentZData", currentZData);
-            super.setProperty("XOffset", xOffset);
-            super.setProperty("YOffset", yOffset);
-            super.setProperty("ZOffset", zOffset);
-            super.setProperty("ZAngleOffset", zAngleOffset);
             super.setProperty("TotalTime", duration);
-            super.setProperty("BarometerLiveData", barometerData);
-            super.setProperty("GyroscopeLiveData", gyroscopeData);
-            super.setProperty("BarometerHeight", barometerHeight);
-            super.setProperty("AccelerometerRawZValue", accelerationZRawValue);
 			super.setProperty("IsBottleMoving", isBottleMoving);
         }
 
@@ -180,7 +151,7 @@ public class BottleFlipRemoteThing extends VirtualThing
         super.updateSubscribedEvents(60000);
     }
 
-    //When invoked, will turn on all sensor modules, and start calculating properties based on readings.
+    //When invoked, will turn on all sensor modules, and start calculating properties based on readings. Also initializes variables to handle the turn on and off logic
 	@ThingworxServiceDefinition( name="StartGatheringData_BottleFlip_PTC", description="Starts the gathering of data on each refresh.")
 	@ThingworxServiceResult( name=CommonPropertyNames.PROP_RESULT, description="Result", baseType="BOOLEAN" )
 	public Boolean StartGatheringData_BottleFlip_PTC() throws Exception
@@ -188,8 +159,6 @@ public class BottleFlipRemoteThing extends VirtualThing
 		isActivelyGatheringData = true;
 		count = 10;
 		startAccelerometer();
-        //startBarometer();
-        //startGyroscope();
 		timeInterval = new Date();
 		return isActivelyGatheringData;
 	}
@@ -202,28 +171,23 @@ public class BottleFlipRemoteThing extends VirtualThing
 		return stopGatheringData();
 	}
 
+	//method that handles the work for the StopGatheringData_BottleFlip_PTC wrapper method.
 	private Boolean stopGatheringData()
 	{
 		isActivelyGatheringData = false;
 		stopAccelerometer();
-		//stopBarometer();
-		//stopGyroscope();
 
 		if(timeInterval != null)
 		{
 			duration  = (new Date().getTime() - timeInterval.getTime())/1000;
 		}
+
 		acceleration = 0.0f;
-		accelerationZRawValue = 0.0f;
 		speed = 0.0f;
 		height = 0.0f;
 		deltaTime = 0.000f;
-		tempSpeed = 0.0f;
-		deltaTimeInMills = 0.0f;
-		tempHeight = 0.0f;
+
 		millisecondsTimeOfLastRead = 0L;
-		barometerHeight = 0.0f;
-		barometerOffset = 0.0f;
 		heightAcceleration = 0.0f;
 		heightSpeed = 0.0f;
 		isThrowEnded = false;
@@ -250,46 +214,6 @@ public class BottleFlipRemoteThing extends VirtualThing
 
 	}
 
-    //Starts the accelerometer module
-    /*
-    private void startGyroscope()
-    {
-        if(gyroscope != null)
-        {
-            gyroscope.angularVelocity().start();
-            gyroscope.start();
-        }
-    }
-    */
-    //Stops the accelerometer module
-    /*
-    private void stopGyroscope()
-    {
-        gyroscope.angularVelocity().stop();
-        gyroscope.stop();
-
-    }
-    */
-    //Starts the accelerometer module
-    /*
-    private void startBarometer()
-    {
-        if(barometer != null)
-        {
-            barometer.altitude().start();
-            barometer.start();
-        }
-    }
-    */
-    //Stops the accelerometer module
-    /*
-    private void stopBarometer()
-    {
-        barometer.altitude().stop();
-        barometer.stop();
-
-    }
-    */
 
 	//Creates the acceleration stream. This is an asynchronous task that runs in the background, gathering data from the sensor and setting it as a property.
 	protected void createAccelerometerStream(Accelerometer acc)
@@ -309,6 +233,8 @@ public class BottleFlipRemoteThing extends VirtualThing
         }));
     }
 
+    //Checks for a sudden increase in acceleration. The idea is that, once the bottle is in flight, it won't have a high acceleration till it impacts the ground. Once this happens, the isBottleMoving
+	// flag is set to false. From there, this service decrements the count till it reaches zero, then turn off the sensor.
 	private void checkIfBottleLanded(Acceleration acc1)
 	{
 		float x = acc1.x();
@@ -327,54 +253,10 @@ public class BottleFlipRemoteThing extends VirtualThing
 		}
 	}
 
-	//Creates the gyroscope stream. This is an asynchronous task that runs in the background, gathering data from the sensor and setting it as a property.
-    /*
-    protected void createGyroscopeStream(GyroBmi160 gyro)
-	{
-		gyroscope = gyro;
-		gyro.angularVelocity().addRouteAsync(new RouteBuilder() {
-			@Override
-			public void configure(RouteComponent source) {
-			source.stream(new Subscriber() {
-				@Override
-				public void apply(Data data, Object... env) {
-                        AngularVelocity value = data.value(AngularVelocity.class);
-                        gyroscopeData = value.toString();
-				}
-			});
-			}
-		});
-	}
-    */
-
-    //Creates the barometer stream. This is an asynchronous task that runs in the background, gathering data from the sensor and setting it as a property.
-/*	protected void createBarometerStream(BarometerBosch baro)
-	{
-		barometer = baro;
-		barometer.altitude().addRouteAsync(new RouteBuilder() {
-			@Override
-			public void configure(RouteComponent source) {
-				source.stream(new Subscriber() {
-					@Override
-					public void apply(Data data, Object... env) {
-                            float value = data.value(Float.class);
-                            barometerData = "Altitude (m) " + value;
-                            if (barometerOffset == 0.0f) {
-                                barometerOffset = value;
-                            }
-                            if(barometerHeight < (value - barometerOffset)) {
-                                barometerHeight = value - barometerOffset;
-                            }
-					}
-				});
-			}
-		});
-	}
-*/
 	//Calculates physical attributes of the bottle based on the acceleration sensor.
     private void calculateBottlePhysicsAttributes(Acceleration sensorData) {
 
-        accelerationZRawValue = sensorData.z();
+		//If first read, initialize the calculations and do accelerometer calibration
 		if(millisecondsTimeOfLastRead == 0)
 		{
 			float currentYData = sensorData.y();
@@ -388,13 +270,20 @@ public class BottleFlipRemoteThing extends VirtualThing
 			height = 0.0f;
 			deltaTime = 0.000f;
 		}
+		//Else, start calculating the acceleration, speed, and height for each interval of delta time.
 		else
 		{
+			//Set Z position based on sensor
 			currentZData = Math.round((sensorData.z() - zOffset)*10)/10;
+
+			//Get time and calculate delta time
 			long currentTime = new Date().getTime();
 			deltaTime = (currentTime - millisecondsTimeOfLastRead)/1000.000f;
-			deltaTimeInMills = (currentTime - millisecondsTimeOfLastRead);
+
+			//Calculations to gather acceleration, speed, and height.
 			acceleration = calculateAcceleration(sensorData);
+			float tempSpeed = speed;
+			float tempHeight = height;
 			tempSpeed = tempSpeed + (acceleration * deltaTime);
             heightSpeed = heightSpeed + (heightAcceleration*deltaTime);
             tempHeight = tempHeight + (heightSpeed * deltaTime) + ((heightAcceleration*(deltaTime*deltaTime))/2);
@@ -406,18 +295,12 @@ public class BottleFlipRemoteThing extends VirtualThing
             {
                 height = tempHeight;
             }
-			if(speed == 0.0f)
-			{
-				tempSpeed = 0.0f;
-			}
-            if(height == 0.0f)
-            {
-                tempHeight = 0.0f;
-            }
+
 			millisecondsTimeOfLastRead = currentTime;
 		}
 	}
 
+	//Calibration method to allow the sensor to zero out on initial run. This will kill some of the sensor noise.
 	private void calculateCalibrationOffsets(float currentXData, float currentYData, float currentZData)
 	{
 		float zIdealValue = 1.0f;
@@ -426,18 +309,26 @@ public class BottleFlipRemoteThing extends VirtualThing
 		zOffset = currentZData - zIdealValue;
 	}
 
+	//Main calculation method. Figures out the height acceleration and the angular acceleration based on sensor data, Pythagorean Theorem, and Trigonometry
 	private float calculateAcceleration(Acceleration data)
 	{
+		//Acceleration in each direction, rounded to 3 significant figures
 		float xData = Math.round((data.x() - xOffset)*1000)/1000;
 		float yData = Math.round((data.y() - yOffset)*1000)/1000;
 		float zData = Math.round((data.z() - zOffset)*1000)/1000;
         float returnFloat;
+
+		//Calculates the angle between the z axis, and the direction of gravity
         float theta = calculateAngleOffset(xData, yData, zData);
 
+		//Calculates the acceleration in the Throw direction
 		float accelerationTotal = (xData*xData)+(yData*yData)+(zData*zData);
+
+		//Calculates the acceleration in the 'up' direction
 		heightAcceleration = (float)(Math.sqrt(accelerationTotal));
         accelerationTotal = heightAcceleration * (float)Math.cos(theta);
-        LOGGER.error("Height Acceleration = "+heightAcceleration);
+
+		//If the bottle is in motion, 0 out the acceleration, as the only force acting on the bottle at this point is gravity.
 		if(accelerationTotal <= 1.0f || isThrowEnded)
 		{
 			returnFloat = 0.0f;
@@ -448,6 +339,7 @@ public class BottleFlipRemoteThing extends VirtualThing
                 isThrowEnded = true;
             }
 		}
+		//else, return the current read acceleration, minus the acceleration due to gravity. Also turns accelerometer 'Gs' to m/s^2
 		else
 		{
 			returnFloat = (accelerationTotal * 9.81f) - 9.81f;
@@ -455,10 +347,10 @@ public class BottleFlipRemoteThing extends VirtualThing
             isThrowStarted = true;
 			isBottleMoving = true;
 		}
-		accelerationZRawValue = accelerationTotal;
 		return returnFloat;
 	}
 
+	//Calculates the pitch of the sensor via pitch formula.
 	private float calculateAngleOffset(float xData, float yData, float zData)
     {
         float op1 = (float)Math.sqrt((xData*zData) + (yData*yData));
