@@ -51,6 +51,9 @@ import java.util.Date;
 		@ThingworxPropertyDefinition(name="AccelerometerLiveData", description="Data from the sensor", baseType="STRING", category="Aggregates", aspects={"isReadOnly:true"}),
 		@ThingworxPropertyDefinition(name="TotalTime", description="Data from the sensor", baseType="NUMBER", category="Aggregates", aspects={"isReadOnly:true"}),
         @ThingworxPropertyDefinition(name="CurrentZData", description="Data from the sensor", baseType="NUMBER", category="Aggregates", aspects={"isReadOnly:true"}),
+		@ThingworxPropertyDefinition(name="Theta", description="Data from the sensor", baseType="NUMBER", category="Aggregates", aspects={"isReadOnly:true"}),
+		@ThingworxPropertyDefinition(name="IsThrowStarted", description="Data from the sensor", baseType="BOOLEAN", category="Aggregates", aspects={"isReadOnly:true"}),
+		@ThingworxPropertyDefinition(name="IsThrowEnded", description="Data from the sensor", baseType="BOOLEAN", category="Aggregates", aspects={"isReadOnly:true"}),
 		@ThingworxPropertyDefinition(name="IsBottleMoving", description="Data from the sensor", baseType="BOOLEAN", category="Aggregates", aspects={"isReadOnly:true"})
 })
 
@@ -67,6 +70,7 @@ public class BottleFlipRemoteThing extends VirtualThing
 	private float speed = 0.0f;
 	private float height = 0.0f;
 	private float currentZData = 0.0f;
+	private float thetaVar = 0.0f;
 
 	//Variables for calibrating the accelerometer.
 	private float xOffset = 0.0f;
@@ -77,7 +81,7 @@ public class BottleFlipRemoteThing extends VirtualThing
 	private long millisecondsTimeOfLastRead = 0L;
 	private long duration = 0L;
 	private float deltaTime = 0.000f;
-	private Date timeInterval;
+	private long timeInterval = 0L;
 
     private String accelerometerData = "";
 
@@ -144,6 +148,9 @@ public class BottleFlipRemoteThing extends VirtualThing
             super.setProperty("CurrentZData", currentZData);
             super.setProperty("TotalTime", duration);
 			super.setProperty("IsBottleMoving", isBottleMoving);
+			super.setProperty("Theta", thetaVar);
+			super.setProperty("IsThrowStarted", isThrowStarted);
+			super.setProperty("IsThrowEnded", isThrowEnded);
         }
 
 
@@ -159,7 +166,7 @@ public class BottleFlipRemoteThing extends VirtualThing
 		isActivelyGatheringData = true;
 		count = 10;
 		startAccelerometer();
-		timeInterval = new Date();
+		timeInterval = System.currentTimeMillis();
 		return isActivelyGatheringData;
 	}
 
@@ -177,9 +184,9 @@ public class BottleFlipRemoteThing extends VirtualThing
 		isActivelyGatheringData = false;
 		stopAccelerometer();
 
-		if(timeInterval != null)
+		if(timeInterval != 0L)
 		{
-			duration  = (new Date().getTime() - timeInterval.getTime())/1000;
+			duration  = (System.currentTimeMillis() - timeInterval)/1000;
 		}
 
 		acceleration = 0.0f;
@@ -264,7 +271,7 @@ public class BottleFlipRemoteThing extends VirtualThing
 			float zData = sensorData.z();
 			calculateCalibrationOffsets(currentXData, currentYData, zData);
 			currentZData = sensorData.z() - zOffset;
-			millisecondsTimeOfLastRead = new Date().getTime();
+			millisecondsTimeOfLastRead = System.currentTimeMillis();
 			acceleration = calculateAcceleration(sensorData);
 			speed = 0.0f;
 			height = 0.0f;
@@ -277,16 +284,23 @@ public class BottleFlipRemoteThing extends VirtualThing
 			currentZData = Math.round((sensorData.z() - zOffset)*10)/10;
 
 			//Get time and calculate delta time
-			long currentTime = new Date().getTime();
+			long currentTime = System.currentTimeMillis();
 			deltaTime = (currentTime - millisecondsTimeOfLastRead)/1000.000f;
 
 			//Calculations to gather acceleration, speed, and height.
 			acceleration = calculateAcceleration(sensorData);
 			float tempSpeed = speed;
 			float tempHeight = height;
+
+			//Vf = Vi + AT
 			tempSpeed = tempSpeed + (acceleration * deltaTime);
+
+			//Vfup = Viup + AupT
             heightSpeed = heightSpeed + (heightAcceleration*deltaTime);
+
+			//Xf = Xi + ViT + 1/2AT^2
             tempHeight = tempHeight + (heightSpeed * deltaTime) + ((heightAcceleration*(deltaTime*deltaTime))/2);
+
 			if(tempSpeed > speed)
 			{
 				speed = tempSpeed;
@@ -320,13 +334,14 @@ public class BottleFlipRemoteThing extends VirtualThing
 
 		//Calculates the angle between the z axis, and the direction of gravity
         float theta = calculateAngleOffset(xData, yData, zData);
+		thetaVar = theta;
 
 		//Calculates the acceleration in the Throw direction
 		float accelerationTotal = (xData*xData)+(yData*yData)+(zData*zData);
 
 		//Calculates the acceleration in the 'up' direction
-		heightAcceleration = (float)(Math.sqrt(accelerationTotal));
-        accelerationTotal = heightAcceleration * (float)Math.cos(theta);
+		accelerationTotal = (float)(Math.sqrt(accelerationTotal));
+        heightAcceleration = accelerationTotal * (float)Math.cos(theta);
 
 		//If the bottle is in motion, 0 out the acceleration, as the only force acting on the bottle at this point is gravity.
 		if(accelerationTotal <= 1.0f || isThrowEnded)
@@ -342,18 +357,19 @@ public class BottleFlipRemoteThing extends VirtualThing
 		//else, return the current read acceleration, minus the acceleration due to gravity. Also turns accelerometer 'Gs' to m/s^2
 		else
 		{
-			returnFloat = (accelerationTotal * 9.81f) - 9.81f;
+			returnFloat = (accelerationTotal * 9.81f) - (9.81f*(float)Math.cos(theta));
             heightAcceleration = (heightAcceleration * 9.81f) - 9.81f;
             isThrowStarted = true;
 			isBottleMoving = true;
 		}
+
 		return returnFloat;
 	}
 
 	//Calculates the pitch of the sensor via pitch formula.
 	private float calculateAngleOffset(float xData, float yData, float zData)
     {
-        float op1 = (float)Math.sqrt((xData*zData) + (yData*yData));
+        float op1 = (float)Math.sqrt((xData*xData) + (yData*yData));
         float op2 = (float)Math.sqrt((yData*yData)+(zData*zData));
         return (float)Math.atan2(op1,op2);
     }

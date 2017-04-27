@@ -201,11 +201,9 @@ public class MainActivity extends ThingworxActivity implements ServiceConnection
         {
             board.connectAsync().onSuccessTask(new Continuation<Void, Task<Route>>()
             {
-
                 @Override
                 public Task<Route> then(Task<Void> task) throws Exception
                 {
-
                     accelerometer = board.getModule(Accelerometer.class);
                     accelerometer.configure().odr(5f).commit();
                     bottle.createAccelerometerStream(accelerometer);
