@@ -18,6 +18,8 @@ import android.widget.CheckBox;
 import com.mbientlab.metawear.MetaWearBoard;
 import com.mbientlab.metawear.android.BtleService;
 import com.mbientlab.metawear.module.Accelerometer;
+import com.mbientlab.metawear.module.GyroBmi160;
+import com.mbientlab.metawear.module.MagnetometerBmm150;
 import com.thingworx.communications.client.things.VirtualThing;
 import com.thingworx.sdk.android.activity.PreferenceActivity;
 import com.thingworx.sdk.android.activity.ThingworxActivity;
@@ -197,7 +199,7 @@ public class MainActivity extends ThingworxActivity implements ServiceConnection
         final String macAddr = sharedPrefs.getString("prefMacAddress", "");
         board = retrieveBoard(macAddr);
         //attempt to connect
-        sensorCheckBox.setChecked(board != null);
+
         if(board != null)
         {
             board.connectAsync().continueWithTask(new Continuation<Void, Task<Void>>() {
@@ -219,12 +221,23 @@ public class MainActivity extends ThingworxActivity implements ServiceConnection
                     if(!task.isCancelled())
                     {
                         //connected successfully
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                sensorCheckBox.setChecked(board.isConnected());
+                            }
+                        });
 
-                        //gyro=board.getModule(GyroBmi160.class);
-                        accelerometer=board.getModule(Accelerometer.class);
-                        //barometer=board.getModule(BarometerBosch.class);
+                        GyroBmi160 gyro=board.getModule(GyroBmi160.class);
+                        Accelerometer acc=board.getModule(Accelerometer.class);
+                        //BarometerBosch barometer=board.getModule(Bar.class);
+                        MagnetometerBmm150 magMeter = board.getModule(MagnetometerBmm150.class);
+
                         List<MetaWearBoard.Module> moduleList = new ArrayList<MetaWearBoard.Module>();
-                        moduleList.add(accelerometer);
+                        moduleList.add(acc);
+                        moduleList.add(gyro);
+                        moduleList.add(magMeter);
+                        //moduleList.add(barometer);
 
 
                         //probs should pass in all modules (board)
