@@ -794,9 +794,11 @@ int string pref_uri_summary 0x7f060026
 int string search_menu_title 0x7f060013
 int string sensor_mac_address 0x7f060027
 int string sensor_mac_address_summary 0x7f060028
+int string sensor_thingworx_identifier 0x7f060029
+int string sensor_thingworx_identifier_summary 0x7f06002a
 int string status_bar_notification_info_overflow 0x7f060014
-int string title_activity_preference 0x7f060029
-int string title_activity_settings 0x7f06002a
+int string title_activity_preference 0x7f06002b
+int string title_activity_settings 0x7f06002c
 int style AlertDialog_AppCompat 0x7f0800a0
 int style AlertDialog_AppCompat_Light 0x7f0800a1
 int style Animation_AppCompat_Dialog 0x7f0800a2

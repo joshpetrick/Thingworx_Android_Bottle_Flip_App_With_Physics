@@ -16,13 +16,14 @@ import android.view.MenuItem;
 import android.widget.CheckBox;
 
 import com.mbientlab.metawear.MetaWearBoard;
-import com.mbientlab.metawear.Route;
 import com.mbientlab.metawear.android.BtleService;
 import com.mbientlab.metawear.module.Accelerometer;
-
 import com.thingworx.communications.client.things.VirtualThing;
 import com.thingworx.sdk.android.activity.PreferenceActivity;
 import com.thingworx.sdk.android.activity.ThingworxActivity;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import bolts.Continuation;
 import bolts.Task;
@@ -199,19 +200,50 @@ public class MainActivity extends ThingworxActivity implements ServiceConnection
         sensorCheckBox.setChecked(board != null);
         if(board != null)
         {
-            board.connectAsync().onSuccessTask(new Continuation<Void, Task<Route>>()
-            {
+            board.connectAsync().continueWithTask(new Continuation<Void, Task<Void>>() {
                 @Override
-                public Task<Route> then(Task<Void> task) throws Exception
-                {
-                    accelerometer = board.getModule(Accelerometer.class);
-                    accelerometer.configure().odr(5f).commit();
-                    bottle.createAccelerometerStream(accelerometer);
+                public Task<Void> then(Task<Void> task) throws Exception {
+                    System.out.println("Board: "+board.isConnected());
+                    if (task.isCancelled()) {
+                        System.out.println("Board Task Failed: "+board.isConnected());
+                        return task;
+
+                    }
+                    return task.isFaulted() ? reconnect(board) : task;
+                }
+            }).continueWith(new Continuation<Void, Object>() {
+
+
+                @Override
+                public Object then(Task<Void> task) throws Exception {
+                    if(!task.isCancelled())
+                    {
+                        //connected successfully
+
+                        //gyro=board.getModule(GyroBmi160.class);
+                        accelerometer=board.getModule(Accelerometer.class);
+                        //barometer=board.getModule(BarometerBosch.class);
+                        List<MetaWearBoard.Module> moduleList = new ArrayList<MetaWearBoard.Module>();
+                        moduleList.add(accelerometer);
+
+
+                        //probs should pass in all modules (board)
+                        bottle.addBoard_InitiModules(board,moduleList);
+                    }
                     return null;
                 }
             });
 
             board.onUnexpectedDisconnect(status -> Log.i("MainActivity", "Unexpectedly lost connection: " + status));
         }
+    }
+
+    public static Task<Void> reconnect(final MetaWearBoard board) {
+        return board.connectAsync().continueWithTask(new Continuation<Void, Task<Void>>() {
+            @Override
+            public Task<Void> then(Task<Void> task) throws Exception {
+                return task.isFaulted() ? reconnect(board) : task;
+            }
+        });
     }
 }

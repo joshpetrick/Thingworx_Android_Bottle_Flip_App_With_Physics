@@ -14,11 +14,20 @@
 package com.thingworx.sdk.android.bottleflip;
 
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import com.mbientlab.metawear.Data;
+import com.mbientlab.metawear.MetaWearBoard;
+import com.mbientlab.metawear.Route;
+import com.mbientlab.metawear.Subscriber;
+import com.mbientlab.metawear.builder.RouteBuilder;
+import com.mbientlab.metawear.builder.RouteComponent;
 import com.mbientlab.metawear.data.Acceleration;
+import com.mbientlab.metawear.data.AngularVelocity;
+import com.mbientlab.metawear.data.MagneticField;
 import com.mbientlab.metawear.module.Accelerometer;
+import com.mbientlab.metawear.module.BarometerBosch;
+import com.mbientlab.metawear.module.GyroBmi160;
+import com.mbientlab.metawear.module.Led;
+import com.mbientlab.metawear.module.MagnetometerBmm150;
 import com.thingworx.communications.client.ConnectedThingClient;
 import com.thingworx.communications.client.things.VirtualThing;
 import com.thingworx.metadata.annotations.ThingworxPropertyDefinition;
@@ -27,10 +36,13 @@ import com.thingworx.metadata.annotations.ThingworxServiceDefinition;
 import com.thingworx.metadata.annotations.ThingworxServiceResult;
 import com.thingworx.types.constants.CommonPropertyNames;
 
-import com.mbientlab.metawear.Data;
-import com.mbientlab.metawear.Subscriber;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.Date;
+import java.util.List;
+
+import bolts.Continuation;
+import bolts.Task;
 
 
 /**
@@ -61,6 +73,7 @@ public class BottleFlipRemoteThing extends VirtualThing
 {
 	private static final Logger LOGGER = LoggerFactory.getLogger(BottleFlipRemoteThing.class);
 	private Accelerometer accelerometer;
+	private MetaWearBoard board;
 	private boolean isActivelyGatheringData = false;
 
 	//Physical Attributes of the bottle
@@ -165,7 +178,7 @@ public class BottleFlipRemoteThing extends VirtualThing
 	{
 		isActivelyGatheringData = true;
 		count = 10;
-		startAccelerometer();
+
 		timeInterval = System.currentTimeMillis();
 		return isActivelyGatheringData;
 	}
@@ -203,15 +216,6 @@ public class BottleFlipRemoteThing extends VirtualThing
 		return (currentZData == 1.0f || currentZData == -1.0f);
 	}
 
-	//Starts the accelerometer module
-	private void startAccelerometer()
-	{
-		if(accelerometer != null)
-		{
-			accelerometer.acceleration().start();
-			accelerometer.start();
-		}
-	}
 
 	//Stops the accelerometer module
 	private void stopAccelerometer()
@@ -219,14 +223,158 @@ public class BottleFlipRemoteThing extends VirtualThing
 		accelerometer.acceleration().stop();
 		accelerometer.stop();
 
+		//board.clear
+
 	}
 
+
+	protected void addBoard_InitiModules(MetaWearBoard theBoard, List<MetaWearBoard.Module> modules)
+	{
+		board = theBoard;
+
+		for(MetaWearBoard.Module tempModule : modules)
+		{
+			if(tempModule instanceof Accelerometer)
+			{
+				((Accelerometer) tempModule).configure().odr(25f).commit();
+				((Accelerometer) tempModule).acceleration().addRouteAsync(new RouteBuilder() {
+					@Override
+					public void configure(RouteComponent source) {
+						source.stream(new Subscriber() {
+							@Override
+							public void apply(Data data, Object... env) {
+								if(isActivelyGatheringData) {
+									Acceleration acc1 = data.value(Acceleration.class);
+									accelerometerData = acc1.toString();
+									calculateBottlePhysicsAttributes(acc1);
+									if (isThrowEnded && isActivelyGatheringData) {
+										checkIfBottleLanded(acc1);
+									}
+								}
+							}
+						});
+					}
+				}).continueWith(new Continuation<Route, Object>() {
+
+					@Override
+					public Object then(Task<Route> task) throws Exception {
+						((Accelerometer) tempModule).packedAcceleration().start();
+						((Accelerometer) tempModule).start();
+						return null;
+					}
+				});
+			}
+			else if(tempModule instanceof BarometerBosch)
+			{
+				((BarometerBosch) tempModule).configure().pressureOversampling(BarometerBosch.OversamplingMode.ULTRA_HIGH)
+					.filterCoeff(BarometerBosch.FilterCoeff.AVG_4)
+					.standbyTime(0.5f)
+					.commit();
+				((BarometerBosch) tempModule).altitude().addRouteAsync(new RouteBuilder() {
+					@Override
+					public void configure(RouteComponent source) {
+						source.stream(new Subscriber() {
+							@Override
+							public void apply(Data data, Object... env) {
+
+								Float tempD = data.value(Float.class);
+							}
+						});
+					}
+				}).continueWith(new Continuation<Route, Object>() {
+
+					@Override
+					public Object then(Task<Route> task) throws Exception {
+
+						((BarometerBosch) tempModule).altitude().start();
+						((BarometerBosch) tempModule).start();
+						return null;
+					}
+				});
+			}
+			else if(tempModule instanceof GyroBmi160)
+			{
+				((GyroBmi160) tempModule).configure()
+						.odr(GyroBmi160.OutputDataRate.ODR_25_HZ)
+						.range(GyroBmi160.Range.values()[0])
+						.commit();
+				((GyroBmi160) tempModule).angularVelocity().addRouteAsync(source -> source.stream((data, env) -> {
+					final AngularVelocity value = data.value(AngularVelocity.class);
+
+				})).continueWith(new Continuation<Route, Object>() {
+					@Override
+					public Object then(Task<Route> task) throws Exception {
+
+						((GyroBmi160) tempModule).angularVelocity().start();
+						((GyroBmi160) tempModule).start();
+
+						return null;
+					}
+				});
+			}
+			else if(tempModule instanceof MagnetometerBmm150)
+			{
+				((MagnetometerBmm150) tempModule).usePreset(MagnetometerBmm150.Preset.ENHANCED_REGULAR);
+				((MagnetometerBmm150) tempModule).packedMagneticField().addRouteAsync(source -> source.stream((data, env) -> {
+					final MagneticField value = data.value(MagneticField.class);
+				})).continueWith(new Continuation<Route, Object>() {
+					@Override
+					public Object then(Task<Route> task) throws Exception {
+						((MagnetometerBmm150) tempModule).packedMagneticField().start();
+						((MagnetometerBmm150) tempModule).start();
+						return null;
+					}
+				});
+			}
+			else if(tempModule instanceof Led)
+			{
+
+			}
+			else
+			{
+				System.out.println("Module Not accounted for");
+			}
+		}
+		//acc, bar, mag, gyr
+
+	}
 
 	//Creates the acceleration stream. This is an asynchronous task that runs in the background, gathering data from the sensor and setting it as a property.
 	protected void createAccelerometerStream(Accelerometer acc)
     {
-        accelerometer = acc;
-        accelerometer.acceleration().addRouteAsync(source -> source.stream(new Subscriber() {
+
+		accelerometer.configure().odr(25f).commit();
+		accelerometer.acceleration().addRouteAsync(new RouteBuilder() {
+			@Override
+			public void configure(RouteComponent source) {
+				source.stream(new Subscriber() {
+					@Override
+					public void apply(Data data, Object... env) {
+						Acceleration acc1 = data.value(Acceleration.class);
+						accelerometerData = acc1.toString();
+						calculateBottlePhysicsAttributes(acc1);
+						if(isThrowEnded && isActivelyGatheringData)
+						{
+							checkIfBottleLanded(acc1);
+						}
+					}
+				});
+			}
+		}).continueWith(new Continuation<Route, Object>() {
+
+			@Override
+			public Object then(Task<Route> task) throws Exception {
+
+				System.out.println("Starting Accelerometer");
+				accelerometer.acceleration().start();
+				accelerometer.start();
+				return null;
+			}
+		});
+
+
+// old code
+/*        accelerometer.acceleration().addRouteAsync(source -> source.stream(new Subscriber() {
             @Override
             public void apply(Data data, Object... env) {
                     Acceleration acc1 = data.value(Acceleration.class);
@@ -237,8 +385,10 @@ public class BottleFlipRemoteThing extends VirtualThing
 						checkIfBottleLanded(acc1);
 					}
             }
-        }));
+        }));*/
     }
+
+
 
     //Checks for a sudden increase in acceleration. The idea is that, once the bottle is in flight, it won't have a high acceleration till it impacts the ground. Once this happens, the isBottleMoving
 	// flag is set to false. From there, this service decrements the count till it reaches zero, then turn off the sensor.

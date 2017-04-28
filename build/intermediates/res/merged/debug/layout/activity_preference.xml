@@ -14,6 +14,10 @@
             android:title="@string/sensor_mac_address"
             android:summary="@string/sensor_mac_address_summary"
             android:key="prefMacAddress"/>
+        <EditTextPreference
+            android:title="@string/sensor_thingworx_identifier"
+            android:summary="@string/sensor_thingworx_identifier_summary"
+            android:key="prefRemoteIdentifier"/>
     </PreferenceCategory>
 
 </PreferenceScreen>
