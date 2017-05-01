@@ -232,7 +232,13 @@ public class MainActivity extends ThingworxActivity implements ServiceConnection
                         //probs should pass in all modules (board)
                         bottle.addBoard_InitiModules(board, moduleList);
 
-                        sensorCheckBox.setChecked(board != null);
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                sensorCheckBox.setChecked(board != null);
+                            }
+                        });
+
 
                     }
                     return null;
