@@ -13,5 +13,9 @@
     <string name="sensor_mac_address_summary">MAC Address of the Bluetooth Sensor</string>
     <string name="sensor_thingworx_identifier">Remote Thing Identifier</string>
     <string name="sensor_thingworx_identifier_summary">Specifies which Remote Thing in Thingworx to Bind To.</string>
+    <string name="uri_default_value">wss://pp-20170414201908188.portal.ptc.io/Thingworx/WS</string>
+    <string name="app_key_default_value">8f263044-d191-4e8a-97a7-ece9f1867afc</string>
+    <string name="mac_addr_default_value">DE:74:1D:B3:7D:8B</string>
+    <string name="remote_thing_identifier_default_value">Bottle1</string>
 
 </resources>

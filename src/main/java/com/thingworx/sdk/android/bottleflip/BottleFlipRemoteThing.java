@@ -62,6 +62,7 @@ import bolts.Task;
 		@ThingworxPropertyDefinition(name="Height", description="Data from the sensor", baseType="NUMBER", category="Aggregates", aspects={"isReadOnly:true"}),
 		@ThingworxPropertyDefinition(name="BarometerHeight", description="Data from the sensor", baseType="NUMBER", category="Aggregates", aspects={"isReadOnly:true"}),
 		@ThingworxPropertyDefinition(name="AccelerometerLiveData", description="Data from the sensor", baseType="STRING", category="Aggregates", aspects={"isReadOnly:true"}),
+		@ThingworxPropertyDefinition(name="BarometerLiveData", description="Data from the sensor", baseType="STRING", category="Aggregates", aspects={"isReadOnly:true"}),
 		@ThingworxPropertyDefinition(name="TotalTime", description="Data from the sensor", baseType="NUMBER", category="Aggregates", aspects={"isReadOnly:true"}),
         @ThingworxPropertyDefinition(name="CurrentZData", description="Data from the sensor", baseType="NUMBER", category="Aggregates", aspects={"isReadOnly:true"}),
 		@ThingworxPropertyDefinition(name="Theta", description="Data from the sensor", baseType="NUMBER", category="Aggregates", aspects={"isReadOnly:true"}),
@@ -86,6 +87,7 @@ public class BottleFlipRemoteThing extends VirtualThing
 	private float currentZData = 0.0f;
 	private float thetaVar = 0.0f;
 	private float barometerHeight = 0.0f;
+	private float barometerFloorHeight = 0.0f;
 
 	//Variables for calibrating the accelerometer.
 	private float xOffset = 0.0f;
@@ -99,6 +101,7 @@ public class BottleFlipRemoteThing extends VirtualThing
 	private long timeInterval = 0L;
 
     private String accelerometerData = "";
+	private String barometerData = "";
 
 	//logic gates to tell when the bottle is done moving
     private boolean isThrowEnded = false;
@@ -161,6 +164,7 @@ public class BottleFlipRemoteThing extends VirtualThing
             super.setProperty("Height", height);
 			super.setProperty("Height", barometerHeight);
             super.setProperty("AccelerometerLiveData", accelerometerData);
+			super.setProperty("BarometerLiveData", accelerometerData);
             super.setProperty("CurrentZData", currentZData);
             super.setProperty("TotalTime", duration);
 			super.setProperty("IsBottleMoving", isBottleMoving);
@@ -269,8 +273,8 @@ public class BottleFlipRemoteThing extends VirtualThing
 						source.stream(new Subscriber() {
 							@Override
 							public void apply(Data data, Object... env) {
-
-								Float tempD = data.value(Float.class);
+								barometerData = "Altitude: "+data.value(Float.class)+"m";
+								calculateBarometerHeight(data.value(Float.class));
 							}
 						});
 					}
@@ -332,7 +336,23 @@ public class BottleFlipRemoteThing extends VirtualThing
 
 	}
 
-    //Checks for a sudden increase in acceleration. The idea is that, once the bottle is in flight, it won't have a high acceleration till it impacts the ground. Once this happens, the isBottleMoving
+	private void calculateBarometerHeight(Float value)
+	{
+		if(barometerFloorHeight == 0.0f)
+		{
+			barometerFloorHeight = value;
+		}
+		else
+		{
+			float tempheight = value - barometerFloorHeight;
+			if(barometerHeight < tempheight)
+			{
+				barometerHeight = tempheight;
+			}
+		}
+	}
+
+	//Checks for a sudden increase in acceleration. The idea is that, once the bottle is in flight, it won't have a high acceleration till it impacts the ground. Once this happens, the isBottleMoving
 	// flag is set to false. From there, this service decrements the count till it reaches zero, then turn off the sensor.
 	private void checkIfBottleLanded(Acceleration acc1)
 	{
