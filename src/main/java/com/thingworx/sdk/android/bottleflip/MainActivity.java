@@ -16,8 +16,10 @@ import android.view.MenuItem;
 import android.widget.CheckBox;
 
 import com.mbientlab.metawear.MetaWearBoard;
+import com.mbientlab.metawear.Route;
 import com.mbientlab.metawear.android.BtleService;
 import com.mbientlab.metawear.module.Accelerometer;
+import com.mbientlab.metawear.module.BarometerBosch;
 import com.thingworx.communications.client.things.VirtualThing;
 import com.thingworx.sdk.android.activity.PreferenceActivity;
 import com.thingworx.sdk.android.activity.ThingworxActivity;
@@ -42,6 +44,7 @@ public class MainActivity extends ThingworxActivity implements ServiceConnection
     public static final int POLLING_RATE = 250;
     private BtleService.LocalBinder serviceBinder;
     private Accelerometer accelerometer;
+    private BarometerBosch barometer;
     private final String TAG = MainActivity.class.getName();
     private MetaWearBoard board;
 
@@ -197,10 +200,10 @@ public class MainActivity extends ThingworxActivity implements ServiceConnection
         final String macAddr = sharedPrefs.getString("prefMacAddress", "");
         board = retrieveBoard(macAddr);
         //attempt to connect
-        sensorCheckBox.setChecked(board != null);
         if(board != null)
         {
-            board.connectAsync().continueWithTask(new Continuation<Void, Task<Void>>() {
+            board.connectAsync().onSuccessTask(new Continuation<Void, Task<Void>>()
+            {
                 @Override
                 public Task<Void> then(Task<Void> task) throws Exception {
                     System.out.println("Board: "+board.isConnected());
@@ -213,22 +216,24 @@ public class MainActivity extends ThingworxActivity implements ServiceConnection
                 }
             }).continueWith(new Continuation<Void, Object>() {
 
-
                 @Override
-                public Object then(Task<Void> task) throws Exception {
-                    if(!task.isCancelled())
-                    {
+                public Object then(Task<Void> task) throws Exception
+                {
+                    if(!task.isCancelled()) {
                         //connected successfully
 
                         //gyro=board.getModule(GyroBmi160.class);
-                        accelerometer=board.getModule(Accelerometer.class);
-                        //barometer=board.getModule(BarometerBosch.class);
+                        accelerometer = board.getModule(Accelerometer.class);
+                        barometer = board.getModule(BarometerBosch.class);
                         List<MetaWearBoard.Module> moduleList = new ArrayList<MetaWearBoard.Module>();
                         moduleList.add(accelerometer);
 
 
                         //probs should pass in all modules (board)
-                        bottle.addBoard_InitiModules(board,moduleList);
+                        bottle.addBoard_InitiModules(board, moduleList);
+
+                        sensorCheckBox.setChecked(board != null);
+
                     }
                     return null;
                 }
