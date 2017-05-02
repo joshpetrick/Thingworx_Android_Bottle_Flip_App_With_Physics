@@ -63,6 +63,8 @@ import bolts.Task;
 		@ThingworxPropertyDefinition(name="BarometerHeight", description="Data from the sensor", baseType="NUMBER", category="Aggregates", aspects={"isReadOnly:true"}),
 		@ThingworxPropertyDefinition(name="AccelerometerLiveData", description="Data from the sensor", baseType="STRING", category="Aggregates", aspects={"isReadOnly:true"}),
 		@ThingworxPropertyDefinition(name="BarometerLiveData", description="Data from the sensor", baseType="STRING", category="Aggregates", aspects={"isReadOnly:true"}),
+		@ThingworxPropertyDefinition(name="GyroscopeLiveData", description="Data from the sensor", baseType="STRING", category="Aggregates", aspects={"isReadOnly:true"}),
+		@ThingworxPropertyDefinition(name="MagnetometerLiveData", description="Data from the sensor", baseType="STRING", category="Aggregates", aspects={"isReadOnly:true"}),
 		@ThingworxPropertyDefinition(name="TotalTime", description="Data from the sensor", baseType="NUMBER", category="Aggregates", aspects={"isReadOnly:true"}),
         @ThingworxPropertyDefinition(name="CurrentZData", description="Data from the sensor", baseType="NUMBER", category="Aggregates", aspects={"isReadOnly:true"}),
 		@ThingworxPropertyDefinition(name="Theta", description="Data from the sensor", baseType="NUMBER", category="Aggregates", aspects={"isReadOnly:true"}),
@@ -102,6 +104,8 @@ public class BottleFlipRemoteThing extends VirtualThing
 
     private String accelerometerData = "";
 	private String barometerData = "";
+	private String gyroscopeData = "";
+	private String magnetometerData = "";
 
 	//logic gates to tell when the bottle is done moving
     private boolean isThrowEnded = false;
@@ -164,7 +168,9 @@ public class BottleFlipRemoteThing extends VirtualThing
             super.setProperty("Height", height);
 			super.setProperty("Height", barometerHeight);
             super.setProperty("AccelerometerLiveData", accelerometerData);
-			super.setProperty("BarometerLiveData", accelerometerData);
+			super.setProperty("BarometerLiveData", barometerData);
+			super.setProperty("GyroscopeLiveData", gyroscopeData);
+			super.setProperty("MagnetometerLiveData", magnetometerData);
             super.setProperty("CurrentZData", currentZData);
             super.setProperty("TotalTime", duration);
 			super.setProperty("IsBottleMoving", isBottleMoving);
@@ -234,7 +240,7 @@ public class BottleFlipRemoteThing extends VirtualThing
 			if(tempModule instanceof Accelerometer)
 			{
 				((Accelerometer) tempModule).configure().odr(5f).commit();
-				((Accelerometer) tempModule).acceleration().addRouteAsync(new RouteBuilder() {
+				((Accelerometer) tempModule).packedAcceleration().addRouteAsync(new RouteBuilder() {
 					@Override
 					public void configure(RouteComponent source) {
 						source.stream(new Subscriber() {
@@ -297,6 +303,7 @@ public class BottleFlipRemoteThing extends VirtualThing
 						.commit();
 				((GyroBmi160) tempModule).angularVelocity().addRouteAsync(source -> source.stream((data, env) -> {
 					final AngularVelocity value = data.value(AngularVelocity.class);
+					gyroscopeData = value.toString();
 
 				})).continueWith(new Continuation<Route, Object>() {
 					@Override
@@ -314,6 +321,7 @@ public class BottleFlipRemoteThing extends VirtualThing
 				((MagnetometerBmm150) tempModule).usePreset(MagnetometerBmm150.Preset.ENHANCED_REGULAR);
 				((MagnetometerBmm150) tempModule).packedMagneticField().addRouteAsync(source -> source.stream((data, env) -> {
 					final MagneticField value = data.value(MagneticField.class);
+					magnetometerData = value.toString();
 				})).continueWith(new Continuation<Route, Object>() {
 					@Override
 					public Object then(Task<Route> task) throws Exception {
