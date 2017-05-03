@@ -5,17 +5,21 @@
         <EditTextPreference
             android:title="@string/pref_uri"
             android:summary="@string/pref_uri_summary"
+            android:defaultValue="@string/uri_default_value"
             android:key="prefUri"/>
         <EditTextPreference
             android:title="@string/pref_app_key"
             android:summary="@string/pref_app_key_summary"
+            android:defaultValue="@string/app_key_default_value"
             android:key="prefAppKey"/>
         <EditTextPreference
             android:title="@string/sensor_mac_address"
             android:summary="@string/sensor_mac_address_summary"
+            android:defaultValue="@string/mac_addr_default_value"
             android:key="prefMacAddress"/>
         <EditTextPreference
             android:title="@string/sensor_thingworx_identifier"
+            android:defaultValue="@string/remote_thing_identifier_default_value"
             android:summary="@string/sensor_thingworx_identifier_summary"
             android:key="prefRemoteIdentifier"/>
     </PreferenceCategory>
