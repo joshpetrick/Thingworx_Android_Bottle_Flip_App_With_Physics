@@ -83,6 +83,8 @@ public class MainActivity extends ThingworxActivity implements ServiceConnection
 
         checkBoxConnected = (CheckBox) findViewById(R.id.checkBoxConnected);
         sensorCheckBox = (CheckBox) findViewById(R.id.sensorCheckBox);
+        TextView bottleText = (TextView)findViewById(R.id.bottleID);
+        bottleText.setText(R.string.remote_thing_identifier_default_value);
 
         // Bind the service when the activity is created
         getApplicationContext().bindService(new Intent(this, BtleService.class),
