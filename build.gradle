@@ -87,5 +87,7 @@ dependencies {
     compile files('thingworx-common-7.1.0-b13/thingworx-common-7.1.0-b13.jar')
     compile files('thingworx-communications-client-7.1.0-b13/thingworx-communications-client-7.1.0-b13.jar')
     compile project(':thingworx-android-sdk-1.0.0')
+    compile project(':examples')
+    compile project(':scanner')
 }
 

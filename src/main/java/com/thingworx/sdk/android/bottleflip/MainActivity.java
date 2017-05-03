@@ -7,16 +7,19 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.CheckBox;
+import android.widget.TextView;
 
+import com.mbientlab.bletoolbox.examples.MainScanActivity;
 import com.mbientlab.metawear.MetaWearBoard;
-import com.mbientlab.metawear.Route;
 import com.mbientlab.metawear.android.BtleService;
 import com.mbientlab.metawear.module.Accelerometer;
 import com.mbientlab.metawear.module.BarometerBosch;
@@ -53,14 +56,15 @@ public class MainActivity extends ThingworxActivity implements ServiceConnection
 
     private CheckBox checkBoxConnected;
     private CheckBox sensorCheckBox;
+    private static BluetoothDevice device;
 
 
-    private MetaWearBoard retrieveBoard(String macAddr)
+    private MetaWearBoard retrieveBoard()
     {
-        BluetoothDevice remoteDevice = btManager.getAdapter().getRemoteDevice(macAddr);
+        //BluetoothDevice remoteDevice = MainScanActivity.getBT();
 
         // Create a MetaWear board object for the Bluetooth Device
-        return serviceBinder.getMetaWearBoard(remoteDevice);
+        return serviceBinder.getMetaWearBoard(device);
 
     }
 
@@ -75,7 +79,7 @@ public class MainActivity extends ThingworxActivity implements ServiceConnection
         }
         // Build User Interface
         setContentView(R.layout.activity_main);
-        setTitle("Bottle Flip Remote App");
+        setTitle("Android Steam Thing");
 
         checkBoxConnected = (CheckBox) findViewById(R.id.checkBoxConnected);
         sensorCheckBox = (CheckBox) findViewById(R.id.sensorCheckBox);
@@ -203,7 +207,7 @@ public class MainActivity extends ThingworxActivity implements ServiceConnection
     public void connectBTLE()
     {
         final String macAddr = sharedPrefs.getString("prefMacAddress", "");
-        board = retrieveBoard(macAddr);
+        board = retrieveBoard();
         //attempt to connect
         if(board != null)
         {
@@ -227,15 +231,15 @@ public class MainActivity extends ThingworxActivity implements ServiceConnection
                     if(!task.isCancelled()) {
                         //connected successfully
 
- //                       GyroBmi160 gyro = board.getModule(GyroBmi160.class);
+                        GyroBmi160 gyro = board.getModule(GyroBmi160.class);
                         Accelerometer accelerometer = board.getModule(Accelerometer.class);
-//                        BarometerBosch barometer = board.getModule(BarometerBosch.class);
- //                       MagnetometerBmm150 magnetometer = board.getModule(MagnetometerBmm150.class);
+                        BarometerBosch barometer = board.getModule(BarometerBosch.class);
+                        MagnetometerBmm150 magnetometer = board.getModule(MagnetometerBmm150.class);
                         List<MetaWearBoard.Module> moduleList = new ArrayList<MetaWearBoard.Module>();
                         moduleList.add(accelerometer);
-//                        moduleList.add(barometer);
-//                        moduleList.add(gyro);
-//                        moduleList.add(magnetometer);
+                        moduleList.add(barometer);
+                        moduleList.add(gyro);
+                        moduleList.add(magnetometer);
 
 
                         //probs should pass in all modules (board)
@@ -245,8 +249,11 @@ public class MainActivity extends ThingworxActivity implements ServiceConnection
                             @Override
                             public void run() {
                                 sensorCheckBox.setChecked(board != null);
+                                TextView macTV = (TextView)findViewById(R.id.MAC);
+                                macTV.setText(device.getAddress());
                             }
                         });
+
                     }
                     return null;
                 }
@@ -263,5 +270,30 @@ public class MainActivity extends ThingworxActivity implements ServiceConnection
                 return task.isFaulted() ? reconnect(board) : task;
             }
         });
+    }
+
+    public void BLEScanActivity(View view) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            Intent intent = new Intent(this, MainScanActivity.class);
+            startActivityForResult(intent, 1);
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        System.out.println("ACTIVITY RESULT " + requestCode + " " + resultCode + " " + data);
+        if(data != null){
+            device = data.getParcelableExtra(MainScanActivity.DEVICE);
+            if(board != null) {
+                if (!board.isConnected()) {
+                    connectBTLE();
+                }
+            }
+            else {
+                connectBTLE();
+            }
+        } else {
+            System.out.println("Device is Null");
+        }
     }
 }
