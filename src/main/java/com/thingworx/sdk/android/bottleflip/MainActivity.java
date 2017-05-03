@@ -18,7 +18,7 @@ import android.view.View;
 import android.widget.CheckBox;
 import android.widget.TextView;
 
-import com.mbientlab.bletoolbox.examples.MainScanActivity;
+import com.mbientlab.bletoolbox.examples.ScannerActivity;
 import com.mbientlab.metawear.MetaWearBoard;
 import com.mbientlab.metawear.android.BtleService;
 import com.mbientlab.metawear.module.Accelerometer;
@@ -274,7 +274,7 @@ public class MainActivity extends ThingworxActivity implements ServiceConnection
 
     public void BLEScanActivity(View view) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            Intent intent = new Intent(this, MainScanActivity.class);
+            Intent intent = new Intent(this, ScannerActivity.class);
             startActivityForResult(intent, 1);
         }
     }
@@ -283,7 +283,7 @@ public class MainActivity extends ThingworxActivity implements ServiceConnection
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         System.out.println("ACTIVITY RESULT " + requestCode + " " + resultCode + " " + data);
         if(data != null){
-            device = data.getParcelableExtra(MainScanActivity.DEVICE);
+            device = data.getParcelableExtra(ScannerActivity.DEVICE);
             if(board != null) {
                 if (!board.isConnected()) {
                     connectBTLE();
