@@ -17,6 +17,8 @@ import java.util.UUID;
 
 public class ScannerActivity extends AppCompatActivity implements BleScannerFragment.ScannerCommunicationBus {
 
+    public static final String DEVICE = "device";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -49,7 +51,7 @@ public class ScannerActivity extends AppCompatActivity implements BleScannerFrag
     @Override
     public void onDeviceSelected(BluetoothDevice device) {
         Intent intent = this.getIntent();
-        intent.putExtra(MainScanActivity.EXTRA_BLE_DEVICE, device);
+        intent.putExtra(ScannerActivity.DEVICE, device);
         this.setResult(RESULT_OK, intent);
         finish();
     }
