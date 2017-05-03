@@ -20,6 +20,8 @@ import com.mbientlab.metawear.Route;
 import com.mbientlab.metawear.android.BtleService;
 import com.mbientlab.metawear.module.Accelerometer;
 import com.mbientlab.metawear.module.BarometerBosch;
+import com.mbientlab.metawear.module.GyroBmi160;
+import com.mbientlab.metawear.module.MagnetometerBmm150;
 import com.thingworx.communications.client.things.VirtualThing;
 import com.thingworx.sdk.android.activity.PreferenceActivity;
 import com.thingworx.sdk.android.activity.ThingworxActivity;
@@ -43,11 +45,10 @@ public class MainActivity extends ThingworxActivity implements ServiceConnection
     private final static String logTag = MainActivity.class.getSimpleName();
     public static final int POLLING_RATE = 250;
     private BtleService.LocalBinder serviceBinder;
-    private Accelerometer accelerometer;
-    private BarometerBosch barometer;
     private final String TAG = MainActivity.class.getName();
     private MetaWearBoard board;
 
+    private BluetoothManager btManager;
     private BottleFlipRemoteThing bottle;
 
     private CheckBox checkBoxConnected;
@@ -56,8 +57,7 @@ public class MainActivity extends ThingworxActivity implements ServiceConnection
 
     private MetaWearBoard retrieveBoard(String macAddr)
     {
-        final BluetoothManager btManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
-        final BluetoothDevice remoteDevice = btManager.getAdapter().getRemoteDevice(macAddr);
+        BluetoothDevice remoteDevice = btManager.getAdapter().getRemoteDevice(macAddr);
 
         // Create a MetaWear board object for the Bluetooth Device
         return serviceBinder.getMetaWearBoard(remoteDevice);
@@ -69,7 +69,10 @@ public class MainActivity extends ThingworxActivity implements ServiceConnection
         super.onCreate(savedInstanceState);
         Log.d(TAG, "onCreate");
 
-
+        if(btManager == null)
+        {
+            btManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
+        }
         // Build User Interface
         setContentView(R.layout.activity_main);
         setTitle("Android Steam Thing");
@@ -178,6 +181,8 @@ public class MainActivity extends ThingworxActivity implements ServiceConnection
         // Unbind the service when the activity is destroyed
         getApplicationContext().unbindService(this);
 
+        //add board disconnect
+
     }
     @Override
     public void onServiceConnected(ComponentName name, IBinder service) {
@@ -222,11 +227,15 @@ public class MainActivity extends ThingworxActivity implements ServiceConnection
                     if(!task.isCancelled()) {
                         //connected successfully
 
-                        //gyro=board.getModule(GyroBmi160.class);
-                        accelerometer = board.getModule(Accelerometer.class);
-                        barometer = board.getModule(BarometerBosch.class);
+                        GyroBmi160 gyro = board.getModule(GyroBmi160.class);
+                        Accelerometer accelerometer = board.getModule(Accelerometer.class);
+                        BarometerBosch barometer = board.getModule(BarometerBosch.class);
+                        MagnetometerBmm150 magnetometer = board.getModule(MagnetometerBmm150.class);
                         List<MetaWearBoard.Module> moduleList = new ArrayList<MetaWearBoard.Module>();
                         moduleList.add(accelerometer);
+                        moduleList.add(barometer);
+                        moduleList.add(gyro);
+                        moduleList.add(magnetometer);
 
 
                         //probs should pass in all modules (board)
