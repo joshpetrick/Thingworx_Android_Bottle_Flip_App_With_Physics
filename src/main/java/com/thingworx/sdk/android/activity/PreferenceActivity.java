@@ -48,7 +48,7 @@ public class PreferenceActivity extends android.preference.PreferenceActivity im
                 } else {
                     if (listPref.getKey().equals("prefUri")) {
                         pref.setSummary("ex. wss://hostname/Thingworx/WS");
-                    }
+                }
                     if (listPref.getKey().equals("prefAppKey")) {
                         pref.setSummary("ex. e9274d87-58aa-4d60-b27f-e67962f3e5c4");
                     }

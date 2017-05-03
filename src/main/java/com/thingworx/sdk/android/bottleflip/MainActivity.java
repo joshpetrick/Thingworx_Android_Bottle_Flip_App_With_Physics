@@ -75,7 +75,7 @@ public class MainActivity extends ThingworxActivity implements ServiceConnection
         }
         // Build User Interface
         setContentView(R.layout.activity_main);
-        setTitle("Android Steam Thing");
+        setTitle("Bottle Flip Remote App");
 
         checkBoxConnected = (CheckBox) findViewById(R.id.checkBoxConnected);
         sensorCheckBox = (CheckBox) findViewById(R.id.sensorCheckBox);
@@ -227,15 +227,15 @@ public class MainActivity extends ThingworxActivity implements ServiceConnection
                     if(!task.isCancelled()) {
                         //connected successfully
 
-                        GyroBmi160 gyro = board.getModule(GyroBmi160.class);
+ //                       GyroBmi160 gyro = board.getModule(GyroBmi160.class);
                         Accelerometer accelerometer = board.getModule(Accelerometer.class);
-                        BarometerBosch barometer = board.getModule(BarometerBosch.class);
-                        MagnetometerBmm150 magnetometer = board.getModule(MagnetometerBmm150.class);
+//                        BarometerBosch barometer = board.getModule(BarometerBosch.class);
+ //                       MagnetometerBmm150 magnetometer = board.getModule(MagnetometerBmm150.class);
                         List<MetaWearBoard.Module> moduleList = new ArrayList<MetaWearBoard.Module>();
                         moduleList.add(accelerometer);
-                        moduleList.add(barometer);
-                        moduleList.add(gyro);
-                        moduleList.add(magnetometer);
+//                        moduleList.add(barometer);
+//                        moduleList.add(gyro);
+//                        moduleList.add(magnetometer);
 
 
                         //probs should pass in all modules (board)
@@ -247,8 +247,6 @@ public class MainActivity extends ThingworxActivity implements ServiceConnection
                                 sensorCheckBox.setChecked(board != null);
                             }
                         });
-
-
                     }
                     return null;
                 }
