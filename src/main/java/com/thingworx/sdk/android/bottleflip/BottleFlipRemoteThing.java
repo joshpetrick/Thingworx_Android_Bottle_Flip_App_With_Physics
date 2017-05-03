@@ -96,6 +96,9 @@ public class BottleFlipRemoteThing extends VirtualThing
 	private float yOffset = 0.0f;
 	private float zOffset = 0.0f;
 
+	//Height Offset
+	private float heightOffset = 0.8f;
+
 	//keeps track of delta time and throw duration
 	private long millisecondsTimeOfLastRead = 0L;
 	private long duration = 0L;
@@ -166,7 +169,7 @@ public class BottleFlipRemoteThing extends VirtualThing
             super.setProperty("Speed", speed);
             super.setProperty("Acceleration", acceleration);
             super.setProperty("Height", height);
-			super.setProperty("Height", barometerHeight);
+			super.setProperty("BarometerHeight", barometerHeight);
             super.setProperty("AccelerometerLiveData", accelerometerData);
 			super.setProperty("BarometerLiveData", barometerData);
 			super.setProperty("GyroscopeLiveData", gyroscopeData);
@@ -228,25 +231,20 @@ public class BottleFlipRemoteThing extends VirtualThing
 		return (currentZData == 1.0f || currentZData == -1.0f);
 	}
 
-
-
-
 	protected void addBoard_InitiModules(MetaWearBoard theBoard, List<MetaWearBoard.Module> modules)
 	{
 		board = theBoard;
 
-		for(MetaWearBoard.Module tempModule : modules)
-		{
-			if(tempModule instanceof Accelerometer)
-			{
+		for(MetaWearBoard.Module tempModule : modules) {
+			if (tempModule instanceof Accelerometer) {
 				((Accelerometer) tempModule).configure().odr(5f).commit();
-				((Accelerometer) tempModule).packedAcceleration().addRouteAsync(new RouteBuilder() {
+				((Accelerometer) tempModule).acceleration().addRouteAsync(new RouteBuilder() {
 					@Override
 					public void configure(RouteComponent source) {
 						source.stream(new Subscriber() {
 							@Override
 							public void apply(Data data, Object... env) {
-								if(isActivelyGatheringData) {
+								if (isActivelyGatheringData) {
 									Acceleration acc1 = data.value(Acceleration.class);
 									accelerometerData = acc1.toString();
 									calculateBottlePhysicsAttributes(acc1);
@@ -261,25 +259,23 @@ public class BottleFlipRemoteThing extends VirtualThing
 
 					@Override
 					public Object then(Task<Route> task) throws Exception {
-						((Accelerometer) tempModule).packedAcceleration().start();
+						((Accelerometer) tempModule).acceleration().start();
 						((Accelerometer) tempModule).start();
 						return null;
 					}
 				});
-			}
-			else if(tempModule instanceof BarometerBosch)
-			{
+			} else if (tempModule instanceof BarometerBosch) {
 				((BarometerBosch) tempModule).configure().pressureOversampling(BarometerBosch.OversamplingMode.STANDARD)
-					.filterCoeff(BarometerBosch.FilterCoeff.AVG_4)
-					.standbyTime(0.5f)
-					.commit();
+						.filterCoeff(BarometerBosch.FilterCoeff.AVG_4)
+						.standbyTime(0.5f)
+						.commit();
 				((BarometerBosch) tempModule).altitude().addRouteAsync(new RouteBuilder() {
 					@Override
 					public void configure(RouteComponent source) {
 						source.stream(new Subscriber() {
 							@Override
 							public void apply(Data data, Object... env) {
-								barometerData = "Altitude: "+data.value(Float.class)+"m";
+								barometerData = "Altitude: " + data.value(Float.class) + "m";
 								calculateBarometerHeight(data.value(Float.class));
 							}
 						});
@@ -294,9 +290,7 @@ public class BottleFlipRemoteThing extends VirtualThing
 						return null;
 					}
 				});
-			}
-			else if(tempModule instanceof GyroBmi160)
-			{
+			} else if (tempModule instanceof GyroBmi160) {
 				((GyroBmi160) tempModule).configure()
 						.odr(GyroBmi160.OutputDataRate.ODR_25_HZ)
 						.range(GyroBmi160.Range.values()[0])
@@ -315,9 +309,7 @@ public class BottleFlipRemoteThing extends VirtualThing
 						return null;
 					}
 				});
-			}
-			else if(tempModule instanceof MagnetometerBmm150)
-			{
+			} else if (tempModule instanceof MagnetometerBmm150) {
 				((MagnetometerBmm150) tempModule).usePreset(MagnetometerBmm150.Preset.ENHANCED_REGULAR);
 				((MagnetometerBmm150) tempModule).packedMagneticField().addRouteAsync(source -> source.stream((data, env) -> {
 					final MagneticField value = data.value(MagneticField.class);
@@ -330,13 +322,9 @@ public class BottleFlipRemoteThing extends VirtualThing
 						return null;
 					}
 				});
-			}
-			else if(tempModule instanceof Led)
-			{
+			} else if (tempModule instanceof Led) {
 
-			}
-			else
-			{
+			} else {
 				System.out.println("Module Not accounted for");
 			}
 		}
@@ -419,7 +407,7 @@ public class BottleFlipRemoteThing extends VirtualThing
             heightSpeed = heightSpeed + (heightAcceleration*deltaTime);
 
 			//Xf = Xi + ViT + 1/2AT^2
-            tempHeight = tempHeight + (heightSpeed * deltaTime) + ((heightAcceleration*(deltaTime*deltaTime))/2);
+            tempHeight = tempHeight + (heightSpeed * deltaTime) + ((heightAcceleration*(deltaTime*deltaTime))/2) ;
 
 			if(tempSpeed > speed)
 			{
@@ -429,6 +417,8 @@ public class BottleFlipRemoteThing extends VirtualThing
             {
                 height = tempHeight;
             }
+
+
 
 			millisecondsTimeOfLastRead = currentTime;
 		}
@@ -451,6 +441,10 @@ public class BottleFlipRemoteThing extends VirtualThing
 		float yData = Math.round((data.y() - yOffset)*1000)/1000;
 		float zData = Math.round((data.z() - zOffset)*1000)/1000;
         float returnFloat;
+
+//		float xData = data.x();
+//		float yData = data.y();
+//		float zData = data.z();
 
 		//Calculates the angle between the z axis, and the direction of gravity
         float theta = calculateAngleOffset(xData, yData, zData);
@@ -477,6 +471,10 @@ public class BottleFlipRemoteThing extends VirtualThing
 		//else, return the current read acceleration, minus the acceleration due to gravity. Also turns accelerometer 'Gs' to m/s^2
 		else
 		{
+			if(height == 0.0f)
+			{
+				height = heightOffset;
+			}
 			returnFloat = (accelerationTotal * 9.81f) - (9.81f*(float)Math.cos(theta));
             heightAcceleration = (heightAcceleration * 9.81f) - 9.81f;
             isThrowStarted = true;
@@ -489,8 +487,8 @@ public class BottleFlipRemoteThing extends VirtualThing
 	//Calculates the pitch of the sensor via pitch formula.
 	private float calculateAngleOffset(float xData, float yData, float zData)
     {
-        float op1 = (float)Math.sqrt((xData*xData) + (yData*yData));
-        float op2 = (float)Math.sqrt((yData*yData)+(zData*zData));
+		float op1 = (float)Math.sqrt((xData*xData)+(yData*yData));
+        float op2 = (float)Math.sqrt((yData*yData)+(zData*zData)+(xData*xData));
         return (float)Math.atan2(op1,op2);
     }
 }
