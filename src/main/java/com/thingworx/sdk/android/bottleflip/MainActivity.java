@@ -235,13 +235,9 @@ public class MainActivity extends ThingworxActivity implements ServiceConnection
 
                         GyroBmi160 gyro = board.getModule(GyroBmi160.class);
                         Accelerometer accelerometer = board.getModule(Accelerometer.class);
-                        BarometerBosch barometer = board.getModule(BarometerBosch.class);
-                        MagnetometerBmm150 magnetometer = board.getModule(MagnetometerBmm150.class);
                         List<MetaWearBoard.Module> moduleList = new ArrayList<MetaWearBoard.Module>();
                         moduleList.add(accelerometer);
-                        moduleList.add(barometer);
                         moduleList.add(gyro);
-                        moduleList.add(magnetometer);
 
 
                         //probs should pass in all modules (board)
